@@ -1,2 +1,2 @@
 def getPath():
-    return "E:/ważne rzeczy/SEMESTR 10 FINALL BOSS/tesseract"
+    return "E:/wazne rzeczy/SEMESTR 10 FINALL BOSS/tesseract"
