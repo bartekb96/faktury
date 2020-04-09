@@ -49,9 +49,10 @@ class Parser:
   def parseInvoices(self, list):
 
       numberPattern = r".*((Faktura\s*VAT\s*numer)|(Faktura\s*VAT\s*nr)|(Faktura\s*VAT)|(Faktura\s*Numer)|(Faktura\s*nr)):?\s*(?P<invoiceNumber>\S*)"
-      sellerWithoutHeaderPattern = r"(?xs).+?(nabywca|odbiorca|sprzedawca)"         #dotall needed
-      sellerNipWithoutHeaderPattern = r".*NIP\s*(?P<sellerNIP>\d{10})"
-      buyerNipWhenSellerHasNoHeaderPattern = r"nabywca:?.*?NIP:?\s*(?P<buyerNip>\d{10})"
+      sellerWithoutHeaderPatternTmp = r"(?xs).+?(nabywca|odbiorca|sprzedawca)"         #dotall needed
+      #sellerNipWithoutHeaderPattern = r".*NIP\s*(?P<sellerNIP>\d{10})"
+      sellerWithoutHeaderPattern = r"\s*(?P<sellerName>[^\n]*)\s*(?P<sellerAddress>[^\n]*)\s*(?P<sellerCity>[^\n]*)\s*NIP:?\s*(?P<sellerNip>\d{10})"
+      #buyerNipWhenSellerHasNoHeaderPattern = r"nabywca:?.*?NIP:?\s*(?P<buyerNip>\d{10})"
       sellerAndBuyerPattern = r"(?xs).+?sprzedawca:?.+?nabywca:?.+?NIP:?\s*(?P<sellerNip>\d{10}).+?(NIP:?\s*(?P<buyerNip>\d{10}))?"
       sellerPattern = r'sprzedawca:?\s*(?P<sellerName>[^\n]*)\s*(?P<sellerAddress>[^\n]*)\s*(?P<sellerCity>[^\n]*)\s*NIP:?\s*(?P<sellerNip>\d{10})'
       buyerPattern = r'nabywca:?\s*(?P<buyerName>[^\n]*)\s*(?P<buyerAddress>[^\n]*)\s*(?P<buyerCity>[^\n]*)\s*NIP:?\s*(?P<buyerNip>\d{10})?'
@@ -80,19 +81,31 @@ class Parser:
           if file.mode == 'r':
               content = file.read()
 
-              sellerWithoutHeader = re.search(sellerWithoutHeaderPattern, content, re.IGNORECASE | re.DOTALL)
-              sellerNipWithoutHeader = re.search(sellerNipWithoutHeaderPattern, sellerWithoutHeader.group(0), re.IGNORECASE | re.DOTALL)
-              buyerNipWhenSellerHasNoHeader = re.search(buyerNipWhenSellerHasNoHeaderPattern, content, re.IGNORECASE | re.DOTALL)
+              sellerWithoutHeaderTmp = re.search(sellerWithoutHeaderPatternTmp, content, re.IGNORECASE | re.DOTALL)
+              sellerWithoutHeader = re.search(sellerWithoutHeaderPattern, sellerWithoutHeaderTmp.group(0), re.IGNORECASE | re.DOTALL)
+              buyerNipWhenSellerHasNoHeader = re.search(buyerPattern, content, re.IGNORECASE | re.DOTALL)
 
               sellerAndBuyer = re.search(sellerAndBuyerPattern, content, re.IGNORECASE | re.DOTALL)
 
               seller = re.search(sellerPattern, content, re.IGNORECASE | re.DOTALL)
               buyer = re.search(buyerPattern, content,  re.IGNORECASE | re.DOTALL)
 
-              if sellerNipWithoutHeader != None:                        #regex na udaną segmentację bez nagłówka sprzedawcy
-                  val.sellerNipNumber = sellerNipWithoutHeader.group('sellerNIP')
-                  if buyerNipWhenSellerHasNoHeader.group('buyerNip')  != None:
-                      val.buyerNipNumber = buyerNipWhenSellerHasNoHeader.group('buyerNip')
+              if sellerWithoutHeader != None:                        #regex na udaną segmentację bez nagłówka sprzedawcy
+                  val.sellerNipNumber = sellerWithoutHeader.group('sellerNip')
+                  val.sellerAddress = sellerWithoutHeader.group('sellerAddress')
+                  val.sellerCity = sellerWithoutHeader.group('sellerCity')
+                  val.sellerName = sellerWithoutHeader.group('sellerName')
+                  '''if buyerNipWhenSellerHasNoHeader.group('buyerNip')  != None:
+                      val.buyerNipNumber = buyerNipWhenSellerHasNoHeader.group('buyerNip')'''
+                  if buyer != None:         #dane nabywcy
+                      if buyer.group('buyerName') != None:
+                          val.buyerName = buyer.group('buyerName')
+                      if buyer.group('buyerAddress') != None:
+                          val.buyerAddress = buyer.group('buyerAddress')
+                      if buyer.group('buyerCity') != None:
+                          val.buyerCity = buyer.group('buyerCity')
+                      if buyer.group('buyerNip') != None:
+                          val.buyerNipNumber = buyer.group('buyerNip')
                   else:
                       val.buyerNipNumber = -1
               elif sellerAndBuyer != None:                              #regex na nieudaną segmentację
@@ -110,7 +123,7 @@ class Parser:
                       val.sellerCity = seller.group('sellerCity')
                   if seller.group('sellerNip') != None:
                       val.sellerNipNumber = seller.group('sellerNip')
-                  if buyer != None:
+                  if buyer != None:         #dane nabywcy
                       if buyer.group('buyerName') != None:
                           val.buyerName = buyer.group('buyerName')
                       if buyer.group('buyerAddress') != None:
