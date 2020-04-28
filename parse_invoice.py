@@ -21,6 +21,8 @@ class Invoice:
     buyerAddress =""
     buyerName = ""
 
+    invoiceAmount = ""
+
 def startColletion(path):
     invoiceList = []
 

@@ -148,10 +148,10 @@ def getBuyerData(list):
                     content = pytesseract.image_to_string(crop_img, lang='pol', config=config2, output_type=Output.STRING)
 
                     #---------------------tylko robi .txt-------------------
-                    txtPath = picPath[:-4] + ".txt"
+                    '''txtPath = picPath[:-4] + ".txt"
                     faktura = open(txtPath, "w")
                     faktura.write(content)
-                    faktura.close()
+                    faktura.close()'''
                     #-------------------------------------------------------
 
                     try:
@@ -233,8 +233,13 @@ def getSellerData(list):
             #cv2.waitKey(0)
 
             boxes = pytesseract.image_to_data(image, lang='pol', output_type=Output.DICT, config=config2)
+            #print((len(boxes['text'])))
 
             for i in range(len(boxes['text'])):
+
+                if i == len(boxes['text'])-1:           #jeśli nie wynaleziono w całej kolekcji słowa kluczowego
+                    getSellerSDataWhenNoHeader(myPath, val, list)
+
                 if str(boxes['text'][i]) == "Sprzedawca" or str(boxes['text'][i]) == "Sprzedawca:" or str(boxes['text'][i]) == "SPRZEDAWCA" or str(boxes['text'][i]) == "SPRZEDAWCA:":
                     top = boxes['top'][i]
                     left = boxes['left'][i]
@@ -286,6 +291,99 @@ def getSellerData(list):
                         print("nie udało się przypisać danych nabywcy faktury {0}, ERROR: {1}".format(val, err))
 
                     break
+
+
+def getSellerSDataWhenNoHeader(directory, invoiceImage, invoiceList):
+    picPath = directory + '/' + invoiceImage
+    image = cv2.imread(picPath)
+    image = get_grayscale(image)
+    w = image.shape[0]
+    h = image.shape[1]
+
+    namePattern = r'\s*(?P<name>[^\n,]*\.\n)'
+    addressPattern = r'.*?((\n|,\x20|\x20)(?P<address>(os\.?\x20?|ul\.?\x20?|al\.?\x20?)?[a-ząćęłńóśźż]{2,}[a-ząćęłńóśźż\x20]+\d+\x20?/?m?\.?\x20?\d*[a-z]?))'
+    cityPattern = r'.*?(?P<city>\d{2}-\d{3}\x20[a-ząćęłńóśźż]+\x20?[a-ząćęłńóśźż]*\x20?[a-ząćęłńóśźż]*)'
+    nipPattern = r'NIP:?\x20(?P<NIP>((\d{10})|(\d{3}-\d{2}-\d{2}-\d{3})|(\d{3}-\d{3}-\d{2}-\d{2})))'
+
+    crop_img = image[0:int(h / 5.5), 0:int(w / 3.5)]
+    boxes = pytesseract.image_to_data(crop_img, lang='pol', output_type=Output.DICT, config=config2)
+
+    for i in range(len(boxes['text'])):
+        if str(boxes['text'][i]) == "NIP" or str(boxes['text'][i]) == "NIP:":
+            top = boxes['top'][i]
+            left = boxes['left'][i]
+            height = boxes['height'][i]
+            crop_img = crop_img[0:int(top) + int(height) + 10, left - 10:int(w / 3.5)]
+
+    #cv2.imshow(directory, crop_img)
+    #cv2.waitKey(0)
+
+    content = pytesseract.image_to_string(crop_img, lang='pol', config=config1, output_type=Output.STRING)
+    #print(content)
+
+    try:
+        sellerName = re.search(namePattern, content, re.IGNORECASE | re.DOTALL)
+        sellerAddress = re.search(addressPattern, content, re.IGNORECASE | re.DOTALL)
+        sellerCity = re.search(cityPattern, content, re.IGNORECASE | re.DOTALL)
+        sellerNip = re.search(nipPattern, content, re.IGNORECASE | re.DOTALL)
+
+        name = sellerName.group('name')
+        address = sellerAddress.group('address')
+        city = sellerCity.group('city')
+
+        if sellerNip is not None:
+            if sellerNip.group('NIP') is not None:
+                nip = sellerNip.group('NIP')
+                # print(nip)
+
+        for l in invoiceList:
+            if l.invoiceName == invoiceImage[:-4]:
+                l.sellerName = name
+                l.sellerAddress = address
+                l.sellerCity = city
+                l.sellerNipNumber = nip
+
+                name = None
+                address = None
+                city = None
+                nip = None
+
+    except (AttributeError, UnboundLocalError) as err:
+        print("nie udało się przypisać danych nabywcy faktury {0}, ERROR: {1}".format(invoiceImage, err))
+
+
+def getInvoiceAmount(list):
+    myPath = path.getPath()
+    amountPattern = r'(kwota\x20)?do\x20zapłaty:?[^\n,0-9]*(?P<amount>\d+,\d{2})(\x20(zł|PLN))?'
+
+    for val in os.listdir(myPath):
+        if val.endswith(".png") or val.endswith(".jpg"):
+            picPath = myPath + '/' + val
+            image = cv2.imread(picPath)
+            #image = get_grayscale(image)
+
+            content = pytesseract.image_to_string(image, lang='pol', config=config2, output_type=Output.STRING)
+
+            # ---------------------tylko robi .txt-------------------
+            '''txtPath = picPath[:-4] + ".txt"
+            faktura = open(txtPath, "w")
+            faktura.write(content)
+            faktura.close()'''
+            # -------------------------------------------------------
+
+            try:
+                invoiceAmount = re.findall(amountPattern, content, re.IGNORECASE | re.DOTALL)
+                length = len(invoiceAmount)
+                amount = invoiceAmount[length-1][1]
+
+                for l in list:
+                    if l.invoiceName == val[:-4]:
+                        l.invoiceAmount = amount
+
+            except (AttributeError, UnboundLocalError) as err:
+                print("nie udało się przypisać kwoty faktury {0}, ERROR: {1}".format(val, err))
+
+            continue
 
 
 def changeContrastAndBrightness(contrast, brightness, image):   #contrast [0.0-3.0], brightness [0-100]

@@ -11,7 +11,8 @@ if __name__== "__main__":
 
  tess_ORC.getInvoiceNumber(invoices)       #odzyskiwanie numeru faktury -> działa
  tess_ORC.getBuyerData(invoices)           #odzyskiwanie danych nabywcy -> działą
- tess_ORC.getSellerData(invoices)
+ tess_ORC.getSellerData(invoices)          #odzyskiwanie danych sprzedawcy -> działą
+ tess_ORC.getInvoiceAmount(invoices)       #odzyskiwanie kwoty faktury -> działą
 
  print("done")
 
