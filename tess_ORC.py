@@ -8,6 +8,7 @@ import path
 import os
 import ghostscript
 import locale
+import find_tabels
 
 #-------------------------------TESSERACT CONFIGURATION----------------------------------
 #config = r'--oem 3 --psm 6'
@@ -386,6 +387,113 @@ def getInvoiceAmount(list):
             continue
 
 
+def getPositionsList(list):
+    myPath = path.getPath()
+
+    for val in os.listdir(myPath):
+        if val.endswith(".png") or val.endswith(".jpg"):
+            picPath = myPath + '/' + val
+            image = cv2.imread(picPath, 0)
+
+            if image.shape[0] > 2340 or image.shape[1] > 1710:
+                size = (int(image.shape[1] * 0.75), int(image.shape[0] * 0.75))
+                image = cv2.resize(image, size)
+
+            w = image.shape[1]
+            h = image.shape[0]
+
+            boxes = pytesseract.image_to_data(image, lang='pol', output_type=Output.DICT, config=config2)  #było zmienione na config2
+            boxes2 = pytesseract.image_to_data(image, lang='pol', output_type=Output.DICT, config=config1)  # było zmienione na config2
+            #boxes2 = pytesseract.image_to_data(image, lang='pol', output_type=Output.STRING, config=config1)
+            #print(boxes2)
+
+            try:
+                bruttoResult = searchInBoxes(val, image, boxes, h, w)
+                if bruttoResult is None:
+                    bruttoResult = searchInBoxes(val, image, boxes2, h, w)
+                    if bruttoResult is None:
+                        print("nie udało się odczytać listy pozycji faktury")
+
+                if bruttoResult is not None:
+                    crop_img, y, x, h, w = bruttoResult
+                    crop_img = cv2.rectangle(crop_img, (x, y), (x + w, y + h), (0, 0, 255), 1)
+                    cv2.imshow(val, crop_img)
+                    cv2.waitKey(0)
+
+            except TypeError as err:
+                print("nie udało się odnalezc pozycji kwoty brutto dla fakturys {0}, ERROR: {1}".format(val, err))
+
+
+def searchInBoxes(val, image, boxes, h, w):
+
+    for i in range(len(boxes['text'])):
+
+        if str(boxes['text'][i]) == "Usługa:" or str(boxes['text'][i]) == "Usługa" or str(boxes['text'][i]) == "Usługi:" or str(boxes['text'][i]) == "Usługi" or str(boxes['text'][i]) == "usługa:" or str(boxes['text'][i]) == "usługa" or str(boxes['text'][i]) == "usługi:" or str(boxes['text'][i]) == "usługi" or str(boxes['text'][i]) == "Opłaty:" or str(boxes['text'][i]) == "Opłaty" or str(boxes['text'][i]) == "opłaty:" or str(boxes['text'][i]) == "opłaty" or str(boxes['text'][i]) == "Usługa/Towar":
+            top = boxes['top'][i]
+            left = boxes['left'][i]
+
+            bottom = h
+            for i in range(len(boxes['text'])):
+                if ((str(boxes['text'][i]) == "zapłaty" or str(boxes['text'][i]) == "zapłaty:") and (int(boxes['top'][i]) > top)):
+                    bottom = boxes['top'][i] + boxes['height'][i]
+                    break
+
+            crop_img = image[top - 15:bottom + 5, 0:w]
+
+            #cv2.imshow(val, crop_img)
+            #cv2.waitKey(0)
+
+            try:
+                print("faktura " + str(val) + ": " + str(getBruttoColumnPosition(crop_img)))
+                y, x, h, w = getBruttoColumnPosition(crop_img)
+                #cv2.rectangle(crop_img, (x, y), (x + w, y + h), (0, 0, 255), 1)
+            except TypeError as err:
+                print("nie udało się odnalezc pozycji kwoty brutto dla fakturys {0}, ERROR: {1}".format(val, err))
+
+                #cv2.imshow(val, crop_img)
+                #cv2.waitKey(0)
+
+            return crop_img, y, x, h, w
+            #break
+    #return None
+
+
+def dupa(path):
+    image = cv2.imread(path, 0)
+    '''w = image.shape[1]
+    h = image.shape[0]
+    print("width: " + str(w))
+    print("height: " + str(h))
+    #image = image[0:w, 0:h]
+    image = image[100:h - 200, 0:w]
+    cv2.imshow(path, image)
+    cv2.waitKey(0)'''
+    boxes2 = pytesseract.image_to_data(image, lang='pol', output_type=Output.STRING, config=config2)
+    print(boxes2)
+
+def getBruttoColumnPosition(image):
+
+    boxes = pytesseract.image_to_data(image, lang='pol', output_type=Output.DICT, config=config2)
+    h = image.shape[1]
+    #w = image.shape[0]
+
+    for i in range(len(boxes['text'])):
+        if (boxes['text'][i] == "brutto" or boxes['text'][i] == "brutto[zł]" or boxes['text'][i] == "brutto(zł)") and boxes['height'][i] < int(h/2):
+            return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i]
+
+    for i in range(len(boxes['text'])):
+        if (boxes['text'][i] == "Wartość" or boxes['text'][i] == "wartość") and boxes['height'][i] < int(h/2):
+            return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i]
+
+    return 0
+
+def getNextPosition(currentTop, currentLeft, boxes):
+
+    for i in range(len(boxes['text'])):
+        if boxes['top'][i] > currentTop and (currentLeft - 10 < boxes['left'][i] < currentLeft + 10):
+            return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i]
+
+
 def changeContrastAndBrightness(contrast, brightness, image):   #contrast [0.0-3.0], brightness [0-100]
 
     new_image = np.zeros(image.shape, image.dtype)
@@ -408,63 +516,3 @@ def changeContrastAndBrightness(contrast, brightness, image):   #contrast [0.0-3
         print('Błąd edycji obrazu')
 
     return new_image
-
-
-def removeTelNumberAndEmailAddress(text):
-    phoneNumberPattern = r'tel:?\s(\+48/?\s?)?(?P<phonenNumber>(\d{2}\s?-?\s?\d{2}\s?-?\s?\d{2}\s?-?\s?\d{3})|(\d{9})|(\d{3}\s?-?\s?\d{2}\s?-?\s?\d{2}\s?-?\s?\d{2}))'
-    emailAddressPattern = r' '
-
-
-
-
-'''
-Path = path.getPath() + '/f2.jpg'
-image = cv2.imread(Path)
-
-gray = get_grayscale(image)
-thresh = thresholding(gray)
-
-#-----------------------------
-img = gray    #podmienić potem
-#-----------------------------
-
-boxes = pytesseract.image_to_data(img, lang='pol', output_type=Output.DICT, config=config)
-#boxes = pytesseract.image_to_data(img, lang='pol')
-print(boxes)
-n_boxes = len(boxes['text'])
-
-for i in range(n_boxes):
-    if int(boxes['conf'][i]) > 0:
-        (x, y, w, h) = (boxes['left'][i], boxes['top'][i], boxes['width'][i], boxes['height'][i])
-        img1 = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
-cv2.imshow('img1', img1)
-cv2.waitKey(0)
-'''
-
-'''
-b,g,r = cv2.split(image)
-rgb_img = cv2.merge([r,g,b])
-#plt.imshow(rgb_img)
-#plt.show()
-
-plt.imshow(thresh, cmap='gray')
-plt.show()
-'''
-
-'''
-
-images = {'gray': gray, 'thresh': thresh, 'opening': opening, 'canny': canny}
-
-
-fig = plt.figure(figsize=(13,13))
-ax = []
-
-rows = 2
-columns = 2
-keys = list(images.keys())
-for i in range(rows*columns):
-    ax.append( fig.add_subplot(rows, columns, i+1) )
-    ax[-1].set_title('AUREBESH - ' + keys[i])
-    plt.imshow(images[keys[i]], cmap='gray')
-'''
