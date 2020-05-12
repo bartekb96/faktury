@@ -14,8 +14,6 @@ if __name__== "__main__":
  #tess_ORC.getSellerData(invoices)          #odzyskiwanie danych sprzedawcy -> działą
  #tess_ORC.getInvoiceAmount(invoices)       #odzyskiwanie kwoty faktury -> działą
  tess_ORC.getPositionsList(invoices)
- #tess_ORC.dupa("E:/wazne rzeczy/SEMESTR 10 FINALL BOSS/tesseract/wzor-faktury-1.png")
- #tess_ORC.dupa("E:/wazne rzeczy/SEMESTR 10 FINALL BOSS/tesseract/f2.jpg")
 
  print("done")
 
