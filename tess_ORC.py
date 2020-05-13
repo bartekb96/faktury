@@ -407,6 +407,9 @@ def getPositionsList(list):
             #boxes2 = pytesseract.image_to_data(image, lang='pol', output_type=Output.STRING, config=config1)
             #print(boxes2)
 
+            # ------------------------------------------------------------------------------------------------------------------------------------------------------
+            #---------------------------------------------------Przycinanie obrazu do samej tabelki-----------------------------------------------------------------
+            # ------------------------------------------------------------------------------------------------------------------------------------------------------
             try:
                 croppedImage = searchInBoxes(val, image, boxes, h, w)
                 if croppedImage is None:
@@ -415,26 +418,41 @@ def getPositionsList(list):
                         print("nie udało się odczytać listy pozycji faktury")
             except TypeError as err:
                 print("nie udało się odnalezc pozycji pola kwoty brutto dla faktury {0}, ERROR: {1}".format(val, err))
+            # ------------------------------------------------------------------------------------------------------------------------------------------------------
+            # ------------------------------------------------------------------------------------------------------------------------------------------------------
+            # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
             try:
                 if croppedImage is not None:
                     boxes = pytesseract.image_to_data(croppedImage, lang='pol', output_type=Output.DICT, config=config2)
-                    boxes_2 = pytesseract.image_to_data(croppedImage, lang='pol', output_type=Output.STRING, config=config2)
-                    print(boxes_2)
+                    #boxes_2 = pytesseract.image_to_data(croppedImage, lang='pol', output_type=Output.STRING, config=config2)
+                    #print(boxes_2)
 
-                    bruttoTop, bruttoLeft, bruttoHeight, bruttoWidth = getBruttoColumnPosition(croppedImage, boxes)
-                    croppedImage = cv2.rectangle(croppedImage, (bruttoLeft, bruttoTop), (bruttoLeft + bruttoWidth, bruttoTop + bruttoHeight), (0, 0, 255), 1)
+                    serviceColumnPosition = getServiceColumnPosition(boxes)
+                    croppedImage = cv2.rectangle(croppedImage, (serviceColumnPosition[1], serviceColumnPosition[0]), (serviceColumnPosition[1] + serviceColumnPosition[3],serviceColumnPosition[0] + serviceColumnPosition[2]), (0, 0, 255), 1)
 
-                    print("kropnąłem")
+                    BruttoColumnPosition = getBruttoColumnPosition(croppedImage, boxes)
+                    croppedImage = cv2.rectangle(croppedImage, (BruttoColumnPosition[1], BruttoColumnPosition[0]), (BruttoColumnPosition[1] + BruttoColumnPosition[3], BruttoColumnPosition[0] + BruttoColumnPosition[2]), (0, 0, 255), 1)
 
-                    result = getNextPosition(bruttoTop, bruttoLeft, boxes)
-                    croppedImage = cv2.rectangle(croppedImage, (result[1], result[0]), (result[1] + result[3], result[0] + result[2]), (0, 0, 255), 1)
+                    currentBruttoPosition = getNextPosition(BruttoColumnPosition[2], BruttoColumnPosition[1], int(w*0.03), int(w*0.03), boxes)
+                    croppedImage = cv2.rectangle(croppedImage, (currentBruttoPosition[1], currentBruttoPosition[0]), (currentBruttoPosition[1] + currentBruttoPosition[3], currentBruttoPosition[0] + currentBruttoPosition[2]), (0, 0, 255), 1)
 
-                    deltaTop = bruttoTop - result[0] + 5
+                    currentServicePosition = getNextPosition(serviceColumnPosition[2], serviceColumnPosition[1], int(w*0.1), int(w*0.05), boxes)
+                    croppedImage = cv2.rectangle(croppedImage, (currentServicePosition[1], currentServicePosition[0]), (currentServicePosition[1] + currentServicePosition[3],currentServicePosition[0] + currentServicePosition[2]), (0, 0, 255), 1)
 
-                    '''while(result[0] - getNextPosition(result[0], result[1], boxes)[0] < deltaTop):
-                        croppedImage = cv2.rectangle(croppedImage, (result[1], result[0]), (result[1] + result[3], result[0] + result[2]), (0, 0, 255), 1)
-                        result = getNextPosition(result[0], result[1], boxes)'''
+                    deltaTop = currentBruttoPosition[0] - BruttoColumnPosition[0] + 5
+
+                    nextBruttoPosition = getNextPosition(currentBruttoPosition[0], currentBruttoPosition[1], int(w*0.03), int(w*0.03), boxes)
+                    nextServicePosition = getNextPosition(currentServicePosition[0], currentServicePosition[1], int(w*0.1), int(w*0.05), boxes)
+
+                    while(( nextBruttoPosition is not None ) and ( nextServicePosition is not None) and ( nextBruttoPosition[0] - currentBruttoPosition[0] < deltaTop ) and ( nextServicePosition[0] - currentServicePosition[0] < deltaTop )):
+                        croppedImage = cv2.rectangle(croppedImage, (nextBruttoPosition[1], nextBruttoPosition[0]), (nextBruttoPosition[1] + nextBruttoPosition[3], nextBruttoPosition[0] + nextBruttoPosition[2]), (0, 0, 255), 1)
+                        croppedImage = cv2.rectangle(croppedImage, (nextServicePosition[1], nextServicePosition[0]), (nextServicePosition[1] + nextServicePosition[3], nextServicePosition[0] + nextServicePosition[2]), (0, 0, 255), 1)
+
+                        currentBruttoPosition = nextBruttoPosition
+                        currentServicePosition = nextServicePosition
+                        nextBruttoPosition = getNextPosition(nextBruttoPosition[0], nextBruttoPosition[1], int(w*0.03), int(w*0.03), boxes)
+                        nextServicePosition = getNextPosition(nextServicePosition[0], nextServicePosition[1], int(w*0.03), int(w*0.03), boxes)
 
                     '''crop_img = cv2.rectangle(croppedImage, (x, y), (x + w, y + h), (0, 0, 255), 1)
                     t, l ,h, w = getNextPosition(y, x, )'''
@@ -461,9 +479,6 @@ def searchInBoxes(val, image, boxes, h, w):
 
             crop_img = image[top - 15:bottom + 5, 0:w]
 
-            #cv2.imshow(val, crop_img)
-            #cv2.waitKey(0)
-
             '''try:
                 print("faktura " + str(val) + ": " + str(getBruttoColumnPosition(crop_img)))
                 #y, x, h, w = getBruttoColumnPosition(crop_img)
@@ -477,7 +492,6 @@ def searchInBoxes(val, image, boxes, h, w):
             return crop_img
             #break
     #return None
-
 
 def dupa(path):
     image = cv2.imread(path, 0)
@@ -500,25 +514,49 @@ def getBruttoColumnPosition(image, boxes):
     for i in range(len(boxes['text'])):
         if (boxes['text'][i] == "brutto" or boxes['text'][i] == "brutto[zł]" or boxes['text'][i] == "brutto(zł)") and boxes['height'][i] < int(h/2):
             #return boxes['top'][i] - 5, boxes['left'][i] - 15, boxes['height'][i] + 10, boxes['width'][i] + 60
-            print("_____brutto")
-            print(boxes['text'][i], boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i])
+            #print("_____brutto")
+            #print(boxes['text'][i], boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i])
             return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i]
 
     for i in range(len(boxes['text'])):
         if (boxes['text'][i] == "Wartość" or boxes['text'][i] == "wartość") and boxes['height'][i] < int(h/2):
             #return boxes['top'][i] - 5, boxes['left'][i] - 15, boxes['height'][i] + 10, boxes['width'][i] + 60
-            print("____wartosc:")
-            print(boxes['text'][i], boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i])
+            #print("____wartosc:")
+            #print(boxes['text'][i], boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i])
             return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i]
 
     return 0
 
-def getNextPosition(currentTop, currentLeft, boxes):
+def getServiceColumnPosition(boxes):
+
+    for i in range(len(boxes['text'])):
+        if str(boxes['text'][i]) == "Usługa:" or str(boxes['text'][i]) == "Usługa" or str(boxes['text'][i]) == "Usługi:" or str(boxes['text'][i]) == "Usługi" or str(boxes['text'][i]) == "usługa:" or str(boxes['text'][i]) == "usługa" or str(boxes['text'][i]) == "usługi:" or str(boxes['text'][i]) == "usługi" or str(boxes['text'][i]) == "Opłaty:" or str(boxes['text'][i]) == "Opłaty" or str(boxes['text'][i]) == "opłaty:" or str(boxes['text'][i]) == "opłaty" or str(boxes['text'][i]) == "Usługa/Towar":
+            return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i]
+
+    return 0
+
+def getNextBruttoPosition(currentTop, currentLeft, boxes):
 
     for i in range(len(boxes['text'])):
         if (boxes['top'][i] > currentTop) and (currentLeft - 40 < boxes['left'][i] < currentLeft + 50) and isFloat(boxes['text'][i]):
-            print("_____Następny")
-            print(boxes['text'][i], boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i])
+            #print("_____Następny")
+            #print(boxes['text'][i], boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i])
+            return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i]
+
+    return None
+
+def getNextServicePosition(currentTop, currentLeft, boxes):
+
+    for i in range(len(boxes['text'])):
+        if (boxes['top'][i] > currentTop) and (currentLeft - 100 < boxes['left'][i] < currentLeft + 20):
+            return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i]
+
+    return None
+
+def getNextPosition(currentTop, currentLeft, leftTolerance, rightTolerance, boxes):
+
+    for i in range(len(boxes['text'])):
+        if (boxes['top'][i] > currentTop) and (currentLeft - leftTolerance < boxes['left'][i] < currentLeft + rightTolerance):
             return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i]
 
     return None
@@ -535,8 +573,6 @@ def isFloat(string):
         else:
             return False
     return True
-
-
 
 def changeContrastAndBrightness(contrast, brightness, image):   #contrast [0.0-3.0], brightness [0-100]
 
