@@ -431,19 +431,42 @@ def getPositionsList(list):
                     serviceColumnPosition = getServiceColumnPosition(boxes)
                     croppedImage = cv2.rectangle(croppedImage, (serviceColumnPosition[1], serviceColumnPosition[0]), (serviceColumnPosition[1] + serviceColumnPosition[3],serviceColumnPosition[0] + serviceColumnPosition[2]), (0, 0, 255), 1)
 
+                    #print("service column position: " + str(serviceColumnPosition))
+                    #cv2.imshow(val, croppedImage)
+                    #cv2.waitKey(0)
+
                     BruttoColumnPosition = getBruttoColumnPosition(croppedImage, boxes)
                     croppedImage = cv2.rectangle(croppedImage, (BruttoColumnPosition[1], BruttoColumnPosition[0]), (BruttoColumnPosition[1] + BruttoColumnPosition[3], BruttoColumnPosition[0] + BruttoColumnPosition[2]), (0, 0, 255), 1)
 
-                    currentBruttoPosition = getNextPosition(BruttoColumnPosition[2], BruttoColumnPosition[1], int(w*0.03), int(w*0.03), boxes)
+                    #print("brutto column position: " + str(BruttoColumnPosition))
+                    #cv2.imshow(val, croppedImage)
+                    #cv2.waitKey(0)
+
+                    currentBruttoPosition = getNextBruttoPosition(BruttoColumnPosition[2], BruttoColumnPosition[1], int(w*0.03), int(w*0.03), boxes)
                     croppedImage = cv2.rectangle(croppedImage, (currentBruttoPosition[1], currentBruttoPosition[0]), (currentBruttoPosition[1] + currentBruttoPosition[3], currentBruttoPosition[0] + currentBruttoPosition[2]), (0, 0, 255), 1)
 
-                    currentServicePosition = getNextPosition(serviceColumnPosition[2], serviceColumnPosition[1], int(w*0.1), int(w*0.05), boxes)
+                    #print("current brutto position: " + str(currentBruttoPosition))
+                    #cv2.imshow(val, croppedImage)
+                    #cv2.waitKey(0)
+
+                    currentServicePosition = getNextServicePosition(serviceColumnPosition[2], serviceColumnPosition[1], int(w*0.15), int(w*0.1), boxes)
                     croppedImage = cv2.rectangle(croppedImage, (currentServicePosition[1], currentServicePosition[0]), (currentServicePosition[1] + currentServicePosition[3],currentServicePosition[0] + currentServicePosition[2]), (0, 0, 255), 1)
+
+                    #print("current service position: " + str(currentServicePosition))
+                    #cv2.imshow(val, croppedImage)
+                    #cv2.waitKey(0)
 
                     deltaTop = currentBruttoPosition[0] - BruttoColumnPosition[0] + 5
 
-                    nextBruttoPosition = getNextPosition(currentBruttoPosition[0], currentBruttoPosition[1], int(w*0.03), int(w*0.03), boxes)
-                    nextServicePosition = getNextPosition(currentServicePosition[0], currentServicePosition[1], int(w*0.1), int(w*0.05), boxes)
+                    #print(deltaTop)
+
+                    nextBruttoPosition = getNextBruttoPosition(currentBruttoPosition[0], currentBruttoPosition[1], int(w*0.03), int(w*0.03), boxes)
+                    nextServicePosition = getNextPosition(currentServicePosition[0], currentServicePosition[1], 5, 5, boxes)
+
+                    #print("next brutto position: " + str(nextBruttoPosition))
+                    #print("next service position: " + str(nextServicePosition))
+                    #cv2.imshow(val, croppedImage)
+                    #cv2.waitKey(0)
 
                     while(( nextBruttoPosition is not None ) and ( nextServicePosition is not None) and ( nextBruttoPosition[0] - currentBruttoPosition[0] < deltaTop ) and ( nextServicePosition[0] - currentServicePosition[0] < deltaTop )):
                         croppedImage = cv2.rectangle(croppedImage, (nextBruttoPosition[1], nextBruttoPosition[0]), (nextBruttoPosition[1] + nextBruttoPosition[3], nextBruttoPosition[0] + nextBruttoPosition[2]), (0, 0, 255), 1)
@@ -451,8 +474,14 @@ def getPositionsList(list):
 
                         currentBruttoPosition = nextBruttoPosition
                         currentServicePosition = nextServicePosition
-                        nextBruttoPosition = getNextPosition(nextBruttoPosition[0], nextBruttoPosition[1], int(w*0.03), int(w*0.03), boxes)
-                        nextServicePosition = getNextPosition(nextServicePosition[0], nextServicePosition[1], int(w*0.03), int(w*0.03), boxes)
+                        nextBruttoPosition = getNextBruttoPosition(nextBruttoPosition[0], nextBruttoPosition[1], int(w*0.03), int(w*0.03), boxes)
+                        nextServicePosition = getNextPosition(nextServicePosition[0], nextServicePosition[1], 5, 5, boxes)
+
+                        #print("current service: " + str(currentServicePosition))
+                        #print("next service: " + str(nextServicePosition))
+
+                        #cv2.imshow(val, croppedImage)
+                        #cv2.waitKey(0)
 
                     '''crop_img = cv2.rectangle(croppedImage, (x, y), (x + w, y + h), (0, 0, 255), 1)
                     t, l ,h, w = getNextPosition(y, x, )'''
@@ -494,17 +523,37 @@ def searchInBoxes(val, image, boxes, h, w):
     #return None
 
 def dupa(path):
-    image = cv2.imread(path, 0)
-    '''w = image.shape[1]
+    #image = cv2.imread(path, 0)
+    image = cv2.imread(path)
+
+    boxes = pytesseract.image_to_data(image, lang='pol', output_type=Output.DICT, config=config2)
+    w = image.shape[1]
     h = image.shape[0]
-    print("width: " + str(w))
-    print("height: " + str(h))
-    #image = image[0:w, 0:h]
-    image = image[100:h - 200, 0:w]
-    cv2.imshow(path, image)
-    cv2.waitKey(0)'''
-    boxes2 = pytesseract.image_to_data(image, lang='pol', output_type=Output.STRING, config=config2)
-    print(boxes2)
+    image = searchInBoxes("test", image, boxes, h, w)
+    #find_tabels.find_Tabels(image)
+
+    pre = find_tabels.pre_process_image(image)
+    text_boxes = find_tabels.find_text_boxes(pre)
+    cells = find_tabels.find_table_in_boxes(text_boxes)
+    hor_lines, ver_lines = find_tabels.build_lines(cells)
+
+    # Visualize the result
+    vis = image.copy()
+
+    # for box in text_boxes:
+    #     (x, y, w, h) = box
+    #     cv2.rectangle(vis, (x, y), (x + w - 2, y + h - 2), (0, 255, 0), 1)
+
+    for line in hor_lines:
+        [x1, y1, x2, y2] = line
+        cv2.line(vis, (x1, y1), (x2, y2), (0, 0, 255), 1)
+
+    for line in ver_lines:
+        [x1, y1, x2, y2] = line
+        cv2.line(vis, (x1, y1), (x2, y2), (0, 0, 255), 1)
+
+    cv2.imshow(path, vis)
+    cv2.waitKey(0)
 
 def getBruttoColumnPosition(image, boxes):
 
@@ -535,20 +584,20 @@ def getServiceColumnPosition(boxes):
 
     return 0
 
-def getNextBruttoPosition(currentTop, currentLeft, boxes):
+def getNextBruttoPosition(currentTop, currentLeft, leftTolerance, rightTolerance, boxes):
 
     for i in range(len(boxes['text'])):
-        if (boxes['top'][i] > currentTop) and (currentLeft - 40 < boxes['left'][i] < currentLeft + 50) and isFloat(boxes['text'][i]):
+        if (boxes['top'][i] > currentTop) and (currentLeft - leftTolerance < boxes['left'][i] < currentLeft + rightTolerance) and isFloat(boxes['text'][i]):
             #print("_____Następny")
             #print(boxes['text'][i], boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i])
             return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i]
 
     return None
 
-def getNextServicePosition(currentTop, currentLeft, boxes):
+def getNextServicePosition(currentTop, currentLeft, leftTolerance, rightTolerance, boxes):
 
     for i in range(len(boxes['text'])):
-        if (boxes['top'][i] > currentTop) and (currentLeft - 100 < boxes['left'][i] < currentLeft + 20):
+        if (boxes['top'][i] > currentTop) and (currentLeft - leftTolerance < boxes['left'][i] < currentLeft + rightTolerance) and boxes['text'][i].isalpha():
             return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i]
 
     return None
@@ -556,7 +605,9 @@ def getNextServicePosition(currentTop, currentLeft, boxes):
 def getNextPosition(currentTop, currentLeft, leftTolerance, rightTolerance, boxes):
 
     for i in range(len(boxes['text'])):
-        if (boxes['top'][i] > currentTop) and (currentLeft - leftTolerance < boxes['left'][i] < currentLeft + rightTolerance):
+        if (boxes['top'][i] > currentTop) and (currentLeft - leftTolerance < boxes['left'][i] < currentLeft + rightTolerance) and boxes['text'][i] is not "":
+            #print("_____Następny")
+            #print(boxes['text'][i], boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i])
             return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i]
 
     return None
@@ -573,6 +624,24 @@ def isFloat(string):
         else:
             return False
     return True
+
+def findNeighbours(top, left, boxes):
+
+    for i in range(len(boxes['text'])):
+        if ( top -5 < boxes['top'][i] < top + 5 ) and boxes['left'][i] < left and isFloat(boxes['text'][i]) is not True and boxes['text'][i] is not "|":
+            leftBoundLeft = boxes['left'][i]
+            leftBoundTop = boxes['top'][i]
+            for j in range(len(boxes['text'])):
+                if ( top -5 < boxes['top'][j] < top + 5 ) and boxes['left'][j] > leftBoundLeft and ( isFloat(boxes['text'][j]) is True or boxes['text'][i] is "|"):
+                    leftBoundLeft = boxes['left'][j] + boxes['width'][j] + 1
+                    leftBoundTop = boxes['top'][j]
+
+    for i in range(len(boxes['text'])):
+        if ( top -5 < boxes['top'][i] < top + 5 ) and boxes['left'][i] > left and isFloat(boxes['text'][i]) is not True and boxes['text'][i] is not "|":
+            rightBoundRight = boxes['left'][i] + boxes['width'][i]
+            rightBoundBottom = boxes['top'][i] + boxes['height'][i]
+
+    return leftBoundLeft, leftBoundTop, rightBoundRight, rightBoundBottom
 
 def changeContrastAndBrightness(contrast, brightness, image):   #contrast [0.0-3.0], brightness [0-100]
 
