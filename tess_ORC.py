@@ -425,8 +425,8 @@ def getPositionsList(list):
             try:
                 if croppedImage is not None:
                     boxes = pytesseract.image_to_data(croppedImage, lang='pol', output_type=Output.DICT, config=config2)
-                    boxes_2 = pytesseract.image_to_data(croppedImage, lang='pol', output_type=Output.STRING, config=config2)
-                    print(boxes_2)
+                    #boxes_2 = pytesseract.image_to_data(croppedImage, lang='pol', output_type=Output.STRING, config=config1)
+                    #print(boxes_2)
 
                     serviceColumnPosition = getServiceColumnPosition(boxes)
                     croppedImage = cv2.rectangle(croppedImage, (serviceColumnPosition[1], serviceColumnPosition[0]), (serviceColumnPosition[1] + serviceColumnPosition[3],serviceColumnPosition[0] + serviceColumnPosition[2]), (0, 0, 255), 1)
@@ -450,7 +450,9 @@ def getPositionsList(list):
                     #cv2.waitKey(0)
 
                     currentServicePosition = getNextServicePosition(serviceColumnPosition[0], serviceColumnPosition[1], serviceColumnPosition[2], int(w*0.15), int(w*0.1), boxes)
-                    croppedImage = cv2.rectangle(croppedImage, (currentServicePosition[1], currentServicePosition[0]), (currentServicePosition[1] + currentServicePosition[3],currentServicePosition[0] + currentServicePosition[2]), (0, 0, 255), 1)
+                    if currentServicePosition is not None:
+                        currentServicePosition = findNeighbours(currentServicePosition[4], boxes)
+                    croppedImage = cv2.rectangle(croppedImage, (currentServicePosition[1], currentServicePosition[0]), (currentServicePosition[1] + currentServicePosition[3], currentServicePosition[0] + currentServicePosition[2]), (0, 0, 255), 1)
 
                     #print("current service position: " + str(currentServicePosition))
                     #cv2.imshow(val, croppedImage)
@@ -462,9 +464,15 @@ def getPositionsList(list):
 
                     nextBruttoPosition = getNextBruttoPosition(currentBruttoPosition[0], currentBruttoPosition[1], currentBruttoPosition[2], int(w*0.03), int(w*0.03), boxes)
                     nextServicePosition = getNextPosition(currentServicePosition[0], currentServicePosition[1], currentServicePosition[2], 5, 5, boxes)
+                    if nextServicePosition is not None:
+                        nextServicePosition = findNeighbours(nextServicePosition[4], boxes)
 
                     #print("next brutto position: " + str(nextBruttoPosition))
                     #print("next service position: " + str(nextServicePosition))
+
+                    #croppedImage = cv2.rectangle(croppedImage, (nextBruttoPosition[1], nextBruttoPosition[0]), (nextBruttoPosition[1] + nextBruttoPosition[3], nextBruttoPosition[0] + nextBruttoPosition[2]),(0, 0, 255), 1)
+                    #croppedImage = cv2.rectangle(croppedImage, (nextServicePosition[1], nextServicePosition[0]), (nextServicePosition[1] + nextServicePosition[3], nextServicePosition[0] + nextServicePosition[2]),(0, 0, 255), 1)
+
                     #cv2.imshow(val, croppedImage)
                     #cv2.waitKey(0)
 
@@ -476,12 +484,14 @@ def getPositionsList(list):
                         currentServicePosition = nextServicePosition
                         nextBruttoPosition = getNextBruttoPosition(nextBruttoPosition[0], nextBruttoPosition[1], nextBruttoPosition[2], int(w*0.03), int(w*0.03), boxes)
                         nextServicePosition = getNextPosition(nextServicePosition[0], nextServicePosition[1], nextServicePosition[2], 5, 5, boxes)
+                        if nextServicePosition is not None:
+                            nextServicePosition = findNeighbours(nextServicePosition[4], boxes)
 
-                        print("current service: " + str(currentServicePosition))
-                        print("next service: " + str(nextServicePosition))
+                        #print("current service: " + str(currentServicePosition))
+                        #print("next service: " + str(nextServicePosition))
 
-                        cv2.imshow(val, croppedImage)
-                        cv2.waitKey(0)
+                        #cv2.imshow(val, croppedImage)
+                        #cv2.waitKey(0)
 
                     '''crop_img = cv2.rectangle(croppedImage, (x, y), (x + w, y + h), (0, 0, 255), 1)
                     t, l ,h, w = getNextPosition(y, x, )'''
@@ -590,15 +600,16 @@ def getNextBruttoPosition(currentTop, currentLeft, currentHeight,  leftTolerance
         if (boxes['top'][i] > currentTop + currentHeight) and (currentLeft - leftTolerance < boxes['left'][i] < currentLeft + rightTolerance) and isFloat(boxes['text'][i]):
             #print("_____Następny")
             #print(boxes['text'][i], boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i])
-            return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i]
+            return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i], i
 
     return None
 
 def getNextServicePosition(currentTop, currentLeft, currentHeight,  leftTolerance, rightTolerance, boxes):
 
     for i in range(len(boxes['text'])):
-        if (boxes['top'][i] > currentTop + currentHeight) and (currentLeft - leftTolerance < boxes['left'][i] < currentLeft + rightTolerance) and boxes['text'][i].isalpha():
-            return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i]
+        #if (boxes['top'][i] > currentTop + currentHeight) and (currentLeft - leftTolerance < boxes['left'][i] < currentLeft + rightTolerance) and boxes['text'][i].isalpha():
+        if (boxes['top'][i] > currentTop + currentHeight) and (currentLeft - leftTolerance < boxes['left'][i] < currentLeft + rightTolerance) and isAlpha(boxes['text'][i]):
+            return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i], i
 
     return None
 
@@ -608,7 +619,7 @@ def getNextPosition(currentTop, currentLeft, currentHeight,  leftTolerance, righ
         if (boxes['top'][i] > currentTop + currentHeight) and (currentLeft - leftTolerance < boxes['left'][i] < currentLeft + rightTolerance) and boxes['text'][i] is not "":
             #print("_____Następny")
             #print(boxes['text'][i], boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i])
-            return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i]
+            return boxes['top'][i], boxes['left'][i], boxes['height'][i], boxes['width'][i], i
 
     return None
 
@@ -632,37 +643,40 @@ def isFloat(string):
             return False
     return True
 
-def findNeighbours(top, left, boxes):
+def findNeighbours(i, boxes):
+    top, left = findLeftNeighbour(i, boxes)
+    bottom, right = findRightNeighbour(i, boxes)
+    height = bottom - top
+    width = right - left
 
-    '''for i in range(len(boxes['text'])):
-        if ( top -5 < boxes['top'][i] < top + 5 ) and boxes['left'][i] < left and isFloat(boxes['text'][i]) is not True and boxes['text'][i] is not "|":
-            leftBoundLeft = boxes['left'][i]
-            leftBoundTop = boxes['top'][i]
-            for j in range(len(boxes['text'])):
-                if ( top -5 < boxes['top'][j] < top + 5 ) and boxes['left'][j] > leftBoundLeft and ( isFloat(boxes['text'][j]) is True or boxes['text'][i] is "|"):
-                    leftBoundLeft = boxes['left'][j] + boxes['width'][j] + 1
-                    leftBoundTop = boxes['top'][j]
+    return top, left, height, width
 
-    for i in range(len(boxes['text'])):
-        if ( top -5 < boxes['top'][i] < top + 5 ) and boxes['left'][i] > left and isFloat(boxes['text'][i]) is not True and boxes['text'][i] is not "|":
-            rightBoundRight = boxes['left'][i] + boxes['width'][i]
-            rightBoundBottom = boxes['top'][i] + boxes['height'][i]'''
+def findLeftNeighbour(i, boxes):
 
-    for i in range(len(boxes['text'])):
-        if (top - 5 < boxes['top'][i] < top + 5) and boxes['left'][i]+boxes['width'][i] < left and isFloat(boxes['text'][i]) is not True and boxes['text'][i] is not "|":
-            leftBoundLeft = boxes['left'][i]
-            leftBoundTop = boxes['top'][i]
-            for j in range(len(boxes['text'])):
-                if (top - 5 < boxes['top'][j] < top + 5) and boxes['left'][j] > leftBoundLeft and (isFloat(boxes['text'][j]) is True or boxes['text'][i] is "|"):
-                    leftBoundLeft = boxes['left'][j] + boxes['width'][j] + 1
-                    leftBoundTop = boxes['top'][j]
+    j = 0
+    #while boxes['top'][i-j]-5 < boxes['top'][i-j-1] < boxes['top'][i-j]+5 and boxes['left'][i-j-1] + boxes['width'][i-j-1] + 10 > boxes['left'][i-j] and isAlpha(boxes['text'][i-j-1]):
+    while boxes['top'][i-j]-5 < boxes['top'][i-j-1] < boxes['top'][i-j]+5 and boxes['left'][i-j-1] + boxes['width'][i-j-1] + 10 > boxes['left'][i-j]:
+        j = j + 1
+    return boxes['top'][i-j], boxes['left'][i-j]
 
-    for i in range(len(boxes['text'])):
-        if (top - 5 < boxes['top'][i] < top + 5) and boxes['left'][i] > left and isFloat(boxes['text'][i]) is not True and boxes['text'][i] is not "|":
-            rightBoundRight = boxes['left'][i] + boxes['width'][i]
-            rightBoundBottom = boxes['top'][i] + boxes['height'][i]
+def findRightNeighbour(i, boxes):
 
-    return leftBoundLeft, leftBoundTop, rightBoundRight, rightBoundBottom
+    j = 0
+    #while boxes['top'][i+j] - 5 < boxes['top'][i + j + 1] < boxes['top'][i+j] + 5 and boxes['left'][i+j+1] < boxes['left'][i+j] + boxes['width'][i+j] + 10 and isAlpha(boxes['text'][i+j+1]):
+    while boxes['top'][i+j] - 5 < boxes['top'][i + j + 1] < boxes['top'][i+j] + 5 and boxes['left'][i+j+1] < boxes['left'][i+j] + boxes['width'][i+j] + 10:
+        j = j + 1
+    return boxes['top'][i+j] + boxes['height'][i+j], boxes['left'][i+j] + boxes['width'][i+j]
+
+def isAlpha(string):
+    regex = re.compile('[@_!#$%^&*()<>?/\|}{~:]')
+
+    if (regex.search(string) == None):
+        if len(string) > 1:
+            return True
+        else:
+            return False
+    else:
+        return False
 
 def changeContrastAndBrightness(contrast, brightness, image):   #contrast [0.0-3.0], brightness [0-100]
 
