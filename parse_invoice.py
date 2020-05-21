@@ -13,15 +13,20 @@ class Invoice:
 
     sellerNipNumber = ""
     sellerCity = ""
-    sellerAddress =""
+    sellerAddress = ""
     sellerName = ""
 
     buyerNipNumber = ""
     buyerCity = ""
-    buyerAddress =""
+    buyerAddress = ""
     buyerName = ""
 
     invoiceAmount = ""
+    positionsList = []
+
+class POSITION:
+    positionName = ""
+    positionAmount = 0.0
 
 def startColletion(path):
     invoiceList = []
@@ -32,6 +37,10 @@ def startColletion(path):
             tmp.invoiceName = val[:-4]
             invoiceList.append(tmp)
 
+            #image = cv2.imread(path + '/' + val)
+            #cv2.imshow(val, image)
+            #cv2.waitKey(0)
+
     return invoiceList
 
 #----------------------------------------------------------------------------
@@ -39,8 +48,6 @@ def startColletion(path):
 #----------------------------------------------------------------------------
 
 
-#dokończyć pattern na szukanie numeru faktury
-#       .*((Numer:\s)|(Faktura\sVAT\snr\s))(\S*)
 class Parser:
   def __init__(self):
         self.filePath = path.getPath()
@@ -137,25 +144,3 @@ class Parser:
 
 
               file.close()
-
-      '''for val in os.listdir(path):
-          if val.endswith(".txt"):
-              file = open(path + "/" + val, "r")
-              if file.mode == 'r':
-                  content = file.read()
-                  result = re.search(numberPattern, content, re.IGNORECASE)
-                  temporaryInvoice = Invoice()
-                  if result != None:
-                      temporaryInvoice.invoiceNumber = result.group('invoiceNumber')    #jeśli istnieje dopasowanie zgodne z numberPattern (znaleziono numer) to dodaj go do listy obiektów z tym właśnie numerem
-                      invoiceList.append(temporaryInvoice)
-                  else:
-                      temporaryInvoice.invoiceNumber = -1
-
-                  if result != None:
-                      print(result.group('invoiceNumber'))'''
-
-#p1 = Parser(r"E:/ważne rzeczy/SEMESTR 10 FINALL BOSS/tesseract/przykladowa_faktura.txt")
-#p1.parseFile()
-
-#p1 = Parser()
-#p1.parseInvoices()

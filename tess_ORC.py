@@ -9,6 +9,7 @@ import os
 import ghostscript
 import locale
 import find_tabels
+import parse_invoice
 
 #-------------------------------TESSERACT CONFIGURATION----------------------------------
 #config = r'--oem 3 --psm 6'
@@ -81,6 +82,7 @@ def pdf2jpeg(pdf_input_path, jpeg_output_path):
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------
+
 def ocrToGetNumber():
     myPath = path.getPath()
 
@@ -113,8 +115,6 @@ def ocrToGetNumber():
             faktura = open(txtPath, "w")
             faktura.write(text)
             faktura.close()
-
-
 
 def getBuyerData(list):
     myPath = path.getPath()
@@ -187,7 +187,6 @@ def getBuyerData(list):
 
                     break
 
-
 def getInvoiceNumber(list):
     myPath = path.getPath()
     numberPattern = r".*((Faktura\s*VAT\s*numer)|(Faktura\s*VAT\s*nr)|(Faktura\s*VAT)|(Faktura\s*Numer)|(Faktura\s*nr)):?\s*(?P<invoiceNumber>\S*)"
@@ -209,8 +208,6 @@ def getInvoiceNumber(list):
                         l.invoiceNumber = invoiceNumber
             except AttributeError as err:
                 print("nie udało się przypisać numeru faktury: {0}".format(err))
-
-
 
 def getSellerData(list):
     myPath = path.getPath()
@@ -293,7 +290,6 @@ def getSellerData(list):
 
                     break
 
-
 def getSellerSDataWhenNoHeader(directory, invoiceImage, invoiceList):
     picPath = directory + '/' + invoiceImage
     image = cv2.imread(picPath)
@@ -352,7 +348,6 @@ def getSellerSDataWhenNoHeader(directory, invoiceImage, invoiceList):
     except (AttributeError, UnboundLocalError) as err:
         print("nie udało się przypisać danych nabywcy faktury {0}, ERROR: {1}".format(invoiceImage, err))
 
-
 def getInvoiceAmount(list):
     myPath = path.getPath()
     amountPattern = r'(kwota\x20)?do\x20zapłaty:?[^\n,0-9]*(?P<amount>\d+,\d{2})(\x20(zł|PLN))?'
@@ -386,8 +381,7 @@ def getInvoiceAmount(list):
 
             continue
 
-
-def getPositionsList(list):
+def getPositionsList(invoiceList):
     myPath = path.getPath()
 
     for val in os.listdir(myPath):
@@ -402,105 +396,44 @@ def getPositionsList(list):
             w = image.shape[1]
             h = image.shape[0]
 
-            boxes = pytesseract.image_to_data(image, lang='pol', output_type=Output.DICT, config=config2)  #było zmienione na config2
-            boxes2 = pytesseract.image_to_data(image, lang='pol', output_type=Output.DICT, config=config1)  # było zmienione na config2
-            #boxes2 = pytesseract.image_to_data(image, lang='pol', output_type=Output.STRING, config=config1)
-            #print(boxes2)
-
             # ------------------------------------------------------------------------------------------------------------------------------------------------------
             #---------------------------------------------------Przycinanie obrazu do samej tabelki-----------------------------------------------------------------
             # ------------------------------------------------------------------------------------------------------------------------------------------------------
+            boxes = pytesseract.image_to_data(image, lang='pol', output_type=Output.DICT, config=config2)
+            boxes2 = pytesseract.image_to_data(image, lang='pol', output_type=Output.DICT, config=config1)
             try:
                 croppedImage = searchInBoxes(val, image, boxes, h, w)
                 if croppedImage is None:
                     croppedImage = searchInBoxes(val, image, boxes2, h, w)
                     if croppedImage is None:
-                        print("nie udało się odczytać listy pozycji faktury")
+                        print("nie udało się odnaleźć tabeli usług")
             except TypeError as err:
                 print("nie udało się odnalezc pozycji pola kwoty brutto dla faktury {0}, ERROR: {1}".format(val, err))
-            # ------------------------------------------------------------------------------------------------------------------------------------------------------
-            # ------------------------------------------------------------------------------------------------------------------------------------------------------
-            # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+            # ------------------------------------------------------------------------------------------------------------------------------------------------------
+            #-------------------------------------------------Odnajdowanie danych z przyciętej tabelki--------------------------------------------------------------
+            # ------------------------------------------------------------------------------------------------------------------------------------------------------
+            boxes = pytesseract.image_to_data(croppedImage, lang='pol', output_type=Output.DICT, config=config2)
+            boxes2 = pytesseract.image_to_data(croppedImage, lang='pol', output_type=Output.DICT, config=config1)
             try:
                 if croppedImage is not None:
-                    boxes = pytesseract.image_to_data(croppedImage, lang='pol', output_type=Output.DICT, config=config2)
-                    #boxes_2 = pytesseract.image_to_data(croppedImage, lang='pol', output_type=Output.STRING, config=config1)
-                    #print(boxes_2)
-
-                    serviceColumnPosition = getServiceColumnPosition(boxes)
-                    croppedImage = cv2.rectangle(croppedImage, (serviceColumnPosition[1], serviceColumnPosition[0]), (serviceColumnPosition[1] + serviceColumnPosition[3],serviceColumnPosition[0] + serviceColumnPosition[2]), (0, 0, 255), 1)
-
-                    #print("service column position: " + str(serviceColumnPosition))
-                    #cv2.imshow(val, croppedImage)
-                    #cv2.waitKey(0)
-
-                    BruttoColumnPosition = getBruttoColumnPosition(croppedImage, boxes)
-                    croppedImage = cv2.rectangle(croppedImage, (BruttoColumnPosition[1], BruttoColumnPosition[0]), (BruttoColumnPosition[1] + BruttoColumnPosition[3], BruttoColumnPosition[0] + BruttoColumnPosition[2]), (0, 0, 255), 1)
-
-                    #print("brutto column position: " + str(BruttoColumnPosition))
-                    #cv2.imshow(val, croppedImage)
-                    #cv2.waitKey(0)
-
-                    currentBruttoPosition = getNextBruttoPosition(BruttoColumnPosition[0], BruttoColumnPosition[1], BruttoColumnPosition[2], int(w*0.03), int(w*0.03), boxes)
-                    croppedImage = cv2.rectangle(croppedImage, (currentBruttoPosition[1], currentBruttoPosition[0]), (currentBruttoPosition[1] + currentBruttoPosition[3], currentBruttoPosition[0] + currentBruttoPosition[2]), (0, 0, 255), 1)
-
-                    #print("current brutto position: " + str(currentBruttoPosition))
-                    #cv2.imshow(val, croppedImage)
-                    #cv2.waitKey(0)
-
-                    currentServicePosition = getNextServicePosition(serviceColumnPosition[0], serviceColumnPosition[1], serviceColumnPosition[2], int(w*0.15), int(w*0.1), boxes)
-                    if currentServicePosition is not None:
-                        currentServicePosition = findNeighbours(currentServicePosition[4], boxes)
-                    croppedImage = cv2.rectangle(croppedImage, (currentServicePosition[1], currentServicePosition[0]), (currentServicePosition[1] + currentServicePosition[3], currentServicePosition[0] + currentServicePosition[2]), (0, 0, 255), 1)
-
-                    #print("current service position: " + str(currentServicePosition))
-                    #cv2.imshow(val, croppedImage)
-                    #cv2.waitKey(0)
-
-                    deltaTop = currentBruttoPosition[0] - BruttoColumnPosition[0] + 10
-
-                    #print(deltaTop)
-
-                    nextBruttoPosition = getNextBruttoPosition(currentBruttoPosition[0], currentBruttoPosition[1], currentBruttoPosition[2], int(w*0.03), int(w*0.03), boxes)
-                    nextServicePosition = getNextPosition(currentServicePosition[0], currentServicePosition[1], currentServicePosition[2], 5, 5, boxes)
-                    if nextServicePosition is not None:
-                        nextServicePosition = findNeighbours(nextServicePosition[4], boxes)
-
-                    #print("next brutto position: " + str(nextBruttoPosition))
-                    #print("next service position: " + str(nextServicePosition))
-
-                    #croppedImage = cv2.rectangle(croppedImage, (nextBruttoPosition[1], nextBruttoPosition[0]), (nextBruttoPosition[1] + nextBruttoPosition[3], nextBruttoPosition[0] + nextBruttoPosition[2]),(0, 0, 255), 1)
-                    #croppedImage = cv2.rectangle(croppedImage, (nextServicePosition[1], nextServicePosition[0]), (nextServicePosition[1] + nextServicePosition[3], nextServicePosition[0] + nextServicePosition[2]),(0, 0, 255), 1)
-
-                    #cv2.imshow(val, croppedImage)
-                    #cv2.waitKey(0)
-
-                    while(( nextBruttoPosition is not None ) and ( nextServicePosition is not None) and ( nextBruttoPosition[0] - currentBruttoPosition[0] < deltaTop ) and ( nextServicePosition[0] - currentServicePosition[0] < deltaTop )):
-                        croppedImage = cv2.rectangle(croppedImage, (nextBruttoPosition[1], nextBruttoPosition[0]), (nextBruttoPosition[1] + nextBruttoPosition[3], nextBruttoPosition[0] + nextBruttoPosition[2]), (0, 0, 255), 1)
-                        croppedImage = cv2.rectangle(croppedImage, (nextServicePosition[1], nextServicePosition[0]), (nextServicePosition[1] + nextServicePosition[3], nextServicePosition[0] + nextServicePosition[2]), (0, 0, 255), 1)
-
-                        currentBruttoPosition = nextBruttoPosition
-                        currentServicePosition = nextServicePosition
-                        nextBruttoPosition = getNextBruttoPosition(nextBruttoPosition[0], nextBruttoPosition[1], nextBruttoPosition[2], int(w*0.03), int(w*0.03), boxes)
-                        nextServicePosition = getNextPosition(nextServicePosition[0], nextServicePosition[1], nextServicePosition[2], 5, 5, boxes)
-                        if nextServicePosition is not None:
-                            nextServicePosition = findNeighbours(nextServicePosition[4], boxes)
-
-                        #print("current service: " + str(currentServicePosition))
-                        #print("next service: " + str(nextServicePosition))
-
-                        #cv2.imshow(val, croppedImage)
-                        #cv2.waitKey(0)
-
-                    '''crop_img = cv2.rectangle(croppedImage, (x, y), (x + w, y + h), (0, 0, 255), 1)
-                    t, l ,h, w = getNextPosition(y, x, )'''
-
-                    cv2.imshow(val, croppedImage)
-                    cv2.waitKey(0)
+                    serviceList = getDataFromTable(boxes2, croppedImage, w)
+                    if serviceList is None:
+                        serviceList = getDataFromTable(boxes, croppedImage, w)
+                        if serviceList is None:
+                            print("nie udało się odczytać listy pozycji faktury")
             except TypeError as err:
                 print("nie udało się odnalezc kwoty brutto pozycji, dla faktury {0}, ERROR: {1}".format(val, err))
 
+            # ------------------------------------------------------------------------------------------------------------------------------------------------------
+            #--------------------------------------------Przypisywanie otrzymanej listy do obiektu faktury----------------------------------------------------------
+            # ------------------------------------------------------------------------------------------------------------------------------------------------------
+            try:
+                for l in invoiceList:
+                    if l.invoiceName == val[:-4]:
+                        l.positionsList = serviceList
+            except TypeError as err:
+                print("nie udało się przypisać listy pozycji, dla faktury {0}, ERROR: {1}".format(val, err))
 
 def searchInBoxes(val, image, boxes, h, w):
 
@@ -531,6 +464,108 @@ def searchInBoxes(val, image, boxes, h, w):
             return crop_img
             #break
     #return None
+
+def getDataFromTable(boxes, croppedImage, w):
+    #boxes = pytesseract.image_to_data(croppedImage, lang='pol', output_type=Output.DICT, config=config2)
+    #boxes_2 = pytesseract.image_to_data(croppedImage, lang='pol', output_type=Output.STRING, config=config2)
+    #print(boxes_2)
+
+    positionList = []
+
+    serviceColumnPosition = getServiceColumnPosition(boxes)
+    #croppedImage = cv2.rectangle(croppedImage, (serviceColumnPosition[1], serviceColumnPosition[0]), (serviceColumnPosition[1] + serviceColumnPosition[3], serviceColumnPosition[0] + serviceColumnPosition[2]),(0, 0, 255), 1)
+
+    # print("service column position: " + str(serviceColumnPosition))
+    #cv2.imshow("1", croppedImage)
+    #cv2.waitKey(0)
+
+    BruttoColumnPosition = getBruttoColumnPosition(croppedImage, boxes)
+    #croppedImage = cv2.rectangle(croppedImage, (BruttoColumnPosition[1], BruttoColumnPosition[0]), (BruttoColumnPosition[1] + BruttoColumnPosition[3], BruttoColumnPosition[0] + BruttoColumnPosition[2]), (0, 0, 255), 1)
+
+    # print("brutto column position: " + str(BruttoColumnPosition))
+    # cv2.imshow(val, croppedImage)
+    # cv2.waitKey(0)
+
+    currentBruttoPosition = getNextBruttoPosition(BruttoColumnPosition[0], BruttoColumnPosition[1],BruttoColumnPosition[2], int(w * 0.03), int(w * 0.03), boxes)
+    #croppedImage = cv2.rectangle(croppedImage, (currentBruttoPosition[1], currentBruttoPosition[0]), (currentBruttoPosition[1] + currentBruttoPosition[3], currentBruttoPosition[0] + currentBruttoPosition[2]),(0, 0, 255), 1)
+
+    # print("current brutto position: " + str(currentBruttoPosition))
+    # cv2.imshow(val, croppedImage)
+    # cv2.waitKey(0)
+
+    currentServicePosition = getNextServicePosition(serviceColumnPosition[0], serviceColumnPosition[1],serviceColumnPosition[2], int(w * 0.15), int(w * 0.1), boxes)
+    if currentServicePosition is not None:
+        currentServicePosition = findNeighbours(currentServicePosition[4], boxes)
+        #croppedImage = cv2.rectangle(croppedImage, (currentServicePosition[1], currentServicePosition[0]), (currentServicePosition[1] + currentServicePosition[3], currentServicePosition[0] + currentServicePosition[2]),(0, 0, 255), 1)
+
+    if currentBruttoPosition[0] - 15 < currentServicePosition[0] < currentBruttoPosition[0] + 15:
+        newPosition = parse_invoice.POSITION()
+        nameImage = croppedImage[currentServicePosition[0] - 5 : currentServicePosition[0] + currentServicePosition[2] + 10, currentServicePosition[1] : currentServicePosition[1] + currentServicePosition[3]]
+        amountImage = croppedImage[currentBruttoPosition[0] - 5:currentBruttoPosition[0] + currentBruttoPosition[2] + 5,currentBruttoPosition[1]:currentBruttoPosition[1] + currentBruttoPosition[3]]
+
+        name = pytesseract.image_to_string(nameImage, lang='pol', config=config2, output_type=Output.STRING)
+        amount = pytesseract.image_to_string(amountImage, lang='pol', config=config2, output_type=Output.STRING)
+        newPosition.positionAmount = amount
+        newPosition.positionName = name
+        positionList.append(newPosition)
+
+    # print("current service position: " + str(currentServicePosition))
+    # cv2.imshow(val, croppedImage)
+    # cv2.waitKey(0)
+
+    deltaTop = currentBruttoPosition[0] - BruttoColumnPosition[0] + 10
+
+    # print(deltaTop)
+
+    nextBruttoPosition = getNextBruttoPosition(currentBruttoPosition[0], currentBruttoPosition[1],currentBruttoPosition[2], int(w * 0.03), int(w * 0.03), boxes)
+    nextServicePosition = getNextPosition(currentServicePosition[0], currentServicePosition[1],currentServicePosition[2], 5, 5, boxes)
+    if nextServicePosition is not None:
+        nextServicePosition = findNeighbours(nextServicePosition[4], boxes)
+
+    # print("next brutto position: " + str(nextBruttoPosition))
+    # print("next service position: " + str(nextServicePosition))
+
+    # croppedImage = cv2.rectangle(croppedImage, (nextBruttoPosition[1], nextBruttoPosition[0]), (nextBruttoPosition[1] + nextBruttoPosition[3], nextBruttoPosition[0] + nextBruttoPosition[2]),(0, 0, 255), 1)
+    # croppedImage = cv2.rectangle(croppedImage, (nextServicePosition[1], nextServicePosition[0]), (nextServicePosition[1] + nextServicePosition[3], nextServicePosition[0] + nextServicePosition[2]),(0, 0, 255), 1)
+
+    # cv2.imshow(val, croppedImage)
+    # cv2.waitKey(0)
+
+    while ((nextBruttoPosition is not None) and (nextServicePosition is not None) and (nextBruttoPosition[0] - currentBruttoPosition[0] < deltaTop) and (nextServicePosition[0] - currentServicePosition[0] < deltaTop)):
+        #croppedImage = cv2.rectangle(croppedImage, (nextBruttoPosition[1], nextBruttoPosition[0]), (nextBruttoPosition[1] + nextBruttoPosition[3], nextBruttoPosition[0] + nextBruttoPosition[2]), (0, 0, 255), 1)
+        #croppedImage = cv2.rectangle(croppedImage, (nextServicePosition[1], nextServicePosition[0]), (nextServicePosition[1] + nextServicePosition[3], nextServicePosition[0] + nextServicePosition[2]), (0, 0, 255),1)
+
+        currentBruttoPosition = nextBruttoPosition
+        currentServicePosition = nextServicePosition
+        nextBruttoPosition = getNextBruttoPosition(nextBruttoPosition[0], nextBruttoPosition[1], nextBruttoPosition[2],int(w * 0.03), int(w * 0.03), boxes)
+        nextServicePosition = getNextPosition(nextServicePosition[0], nextServicePosition[1], nextServicePosition[2], 5,5, boxes)
+        if nextServicePosition is not None:
+            nextServicePosition = findNeighbours(nextServicePosition[4], boxes)
+
+        if currentBruttoPosition[0] - 15 < currentServicePosition[0] < currentBruttoPosition[0] + 15:
+            newPosition = parse_invoice.POSITION()
+            nameImage = croppedImage[currentServicePosition[0] - 5:currentServicePosition[0] + currentServicePosition[2] + 5,currentServicePosition[1]:currentServicePosition[1] + currentServicePosition[3]]
+            amountImage = croppedImage[currentBruttoPosition[0] - 5:currentBruttoPosition[0] + currentBruttoPosition[2] + 5,currentBruttoPosition[1]:currentBruttoPosition[1] + currentBruttoPosition[3]]
+            name = pytesseract.image_to_string(nameImage, lang='pol', config=config2, output_type=Output.STRING)
+            amount = pytesseract.image_to_string(amountImage, lang='pol', config=config2, output_type=Output.STRING)
+            newPosition.positionAmount = amount
+            newPosition.positionName = name
+            positionList.append(newPosition)
+
+        # print("current service: " + str(currentServicePosition))
+        # print("next service: " + str(nextServicePosition))
+
+        # cv2.imshow(val, croppedImage)
+        # cv2.waitKey(0)
+
+    '''crop_img = cv2.rectangle(croppedImage, (x, y), (x + w, y + h), (0, 0, 255), 1)
+    t, l ,h, w = getNextPosition(y, x, )'''
+
+    #cv2.imshow("val", croppedImage)
+    #cv2.waitKey(0)
+
+    return positionList
+
 
 def dupa(path):
     #image = cv2.imread(path, 0)
@@ -655,7 +690,7 @@ def findLeftNeighbour(i, boxes):
 
     j = 0
     #while boxes['top'][i-j]-5 < boxes['top'][i-j-1] < boxes['top'][i-j]+5 and boxes['left'][i-j-1] + boxes['width'][i-j-1] + 10 > boxes['left'][i-j] and isAlpha(boxes['text'][i-j-1]):
-    while boxes['top'][i-j]-5 < boxes['top'][i-j-1] < boxes['top'][i-j]+5 and boxes['left'][i-j-1] + boxes['width'][i-j-1] + 10 > boxes['left'][i-j]:
+    while boxes['top'][i-j]-5 < boxes['top'][i-j-1] < boxes['top'][i-j]+5 and boxes['left'][i-j-1] + boxes['width'][i-j-1] + 11 > boxes['left'][i-j]:
         j = j + 1
     return boxes['top'][i-j], boxes['left'][i-j]
 
@@ -663,7 +698,7 @@ def findRightNeighbour(i, boxes):
 
     j = 0
     #while boxes['top'][i+j] - 5 < boxes['top'][i + j + 1] < boxes['top'][i+j] + 5 and boxes['left'][i+j+1] < boxes['left'][i+j] + boxes['width'][i+j] + 10 and isAlpha(boxes['text'][i+j+1]):
-    while boxes['top'][i+j] - 5 < boxes['top'][i + j + 1] < boxes['top'][i+j] + 5 and boxes['left'][i+j+1] < boxes['left'][i+j] + boxes['width'][i+j] + 10:
+    while boxes['top'][i+j] - 5 < boxes['top'][i + j + 1] < boxes['top'][i+j] + 5 and boxes['left'][i+j+1] < boxes['left'][i+j] + boxes['width'][i+j] + 11:
         j = j + 1
     return boxes['top'][i+j] + boxes['height'][i+j], boxes['left'][i+j] + boxes['width'][i+j]
 
