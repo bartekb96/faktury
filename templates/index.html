@@ -17,12 +17,10 @@
 		
 		<div id="selectBox">
 		    <form action="/upload-invoice" method = "POST" enctype="multipart/form-data">
-				<input type="file" id="real-file" hidden="hidden" name="invoice"/>
-				<input type = "submit" id="real-submit" hidden="hidden"/>
-				<button id="submit-button">PRZEŚLIJ</button>
-				<button id="choose-button">WYBIERZ FAKTURĘ</button>
-				<span id="text">Nie wybrano faktury</span>
-				<div style="clear: both"></div>
+				<input type = "file" name = "invoice" id = "real-file" hidden = "hidden"/>
+				<input type = "submit" id = "real-submit" class = "custom-button" value="PRZEŚLIJ"/>
+				<button type = "button" id = "custom-file-btn" class = "custom-button">WYBIERZ FAKTURĘ</button>
+				<span id = "custom-text" class = "custom-text">Nie wybrano faktury</span>
 			</form>
 		</div>
 		
@@ -42,17 +40,11 @@
 	
 	<script>
 		const realFileBtn = document.getElementById("real-file");
-		const customBtn = document.getElementById("choose-button");
-		const customTxt = document.getElementById("text");
-		const realSubmitBtn = document.getElementById("real-submit");
-		const customSubmitBtn = document.getElementById("submit-button");
+		const customFileBtn = document.getElementById("custom-file-btn");
+		const customTxt = document.getElementById("custom-text");
 
-		customBtn.addEventListener("click", function() {
+		customFileBtn.addEventListener("click", function() {
 			realFileBtn.click();
-		});
-		
-		customSubmitBtn.addEventListener("click", function() {
-			realSubmitBtn.click();
 		});
 		
 		realFileBtn.addEventListener("change", function() {
