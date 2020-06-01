@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+ 
+<head>
+	<meta charset="utf-8">
+    <title>Walidacja Faktur Online</title>
+	<link href="../static/style.css" rel="stylesheet">
+</head>
+ 
+<body>
+ 
+    <div id="container">
+        
+		<div id="logo">
+			<h1>Automatyczna walidacja faktur</h1>
+		</div>
+		
+		<div id="selectBox">
+		    <form action="/upload-invoice" method = "POST" enctype="multipart/form-data">
+				<input type="file" id="real-file" hidden="hidden" name="invoice"/>
+				<input type = "submit" id="real-submit" hidden="hidden"/>
+				<button id="submit-button">PRZEŚLIJ</button>
+				<button id="choose-button">WYBIERZ FAKTURĘ</button>
+				<span id="text">Nie wybrano faktury</span>
+				<div style="clear: both"></div>
+			</form>
+		</div>
+		
+		<div id="invoice">
+			<h1>{{invoice}}</h1>
+		</div>
+		
+		<div id="walidated">
+			<h1>dane odczytane</h1>
+		</div>
+		
+		<div id="footer">
+			<h1>footer</h1>
+		</div>
+		
+    </div>
+	
+	<script>
+		const realFileBtn = document.getElementById("real-file");
+		const customBtn = document.getElementById("choose-button");
+		const customTxt = document.getElementById("text");
+		const realSubmitBtn = document.getElementById("real-submit");
+		const customSubmitBtn = document.getElementById("submit-button");
+
+		customBtn.addEventListener("click", function() {
+			realFileBtn.click();
+		});
+		
+		customSubmitBtn.addEventListener("click", function() {
+			realSubmitBtn.click();
+		});
+		
+		realFileBtn.addEventListener("change", function() {
+			if (realFileBtn.value) {
+				customTxt.innerHTML = realFileBtn.value.match(/[\/\\]([\w\d\s\.\-\(\)]+)$/)[1];
+			} else {
+				customTxt.innerHTML = "Nie wybrano faktury";
+			}
+		});
+	</script>
+	
+</body>
+ 
+</html>

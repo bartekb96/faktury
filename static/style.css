@@ -1,0 +1,115 @@
+#container
+{
+	width: 1200px;
+	margin-left: auto;
+	margin-right: auto;
+	background-color: #666666;
+}
+
+#logo
+{
+	background-color: #12c7a0;
+	color: white;
+	text-align: center;
+	padding: 5px;
+	min-height: 30px;
+	font-size: 20px;
+	border-bottom-style: solid;
+	border-bottom-color: black;
+}
+
+#selectBox
+{
+	background-color: #95a6a1;
+	color: white;
+	text-align: left;
+	padding: 5px;
+	min-height: 30px;
+	font-size: 20px;
+	border-bottom-style: solid;
+	border-bottom-color: black;
+}
+
+#invoice
+{
+	background-color: #white;
+	color: black;
+	text-align: center;
+	padding: 15px;
+	float: left;
+	min-height: 620px;
+	width: 634px;
+	border-left-style: solid;
+	border-left-width: 3px;
+	border-bottom-style: solid;
+	border-bottom-width: 3px;
+}
+
+#walidated
+{
+	background-color: #95a6a1;
+	color: white;
+	text-align: center;
+	padding: 15px;
+	float: left;
+	min-height: 620px;
+	width: 500px;
+	border-left-style: solid;
+	border-left-color: black;
+	border-left-width: 3px;
+	border-bottom-style: solid;
+	border-bottom-width: 3px;
+	border-bottom-color: black;
+}
+
+#footer
+{
+	background-color: #12c7a0;
+	color: white;
+	text-align: center;
+	padding: 5px;
+	clear: both;
+	min-height: 30px;
+	font-size: 12px;
+}
+
+#choose-button
+{
+	padding: 10px;
+	color: white;
+	background-color: #009578;
+	border: 1px solid #000;
+	border-radius: 5px;
+	cursor: pointer;
+}
+
+#choose-button:hover
+{
+	background-color: #6e7a77;
+	cursor: pointer;
+}
+
+#submit-button
+{
+	padding: 10px;
+	color: white;
+	background-color: #009578;
+	border: 1px solid #000;
+	border-radius: 5px;
+	cursor: pointer;
+}
+
+#submit-button:hover
+{
+	background-color: #6e7a77;
+	cursor: pointer;
+}
+
+#text
+{
+	margin-left: 10px;
+	font-family: sans-serif;
+	color: white;
+}
+
+
