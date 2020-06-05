@@ -1,3 +1,8 @@
+* 
+{
+  font-family: sans-serif;
+}
+
 #container
 {
 	width: 1200px;
@@ -48,8 +53,8 @@
 #walidated
 {
 	background-color: #95a6a1;
-	color: white;
-	text-align: center;
+	color: black;
+	text-align: left;
 	padding: 15px;
 	float: left;
 	min-height: 620px;
@@ -60,6 +65,11 @@
 	border-bottom-style: solid;
 	border-bottom-width: 3px;
 	border-bottom-color: black;
+}
+
+.walidated table
+{
+	margin: 0 auto;
 }
 
 #footer
@@ -95,3 +105,50 @@
 	font-family: sans-serif;
 	color: white;
 }
+
+.table-content
+{
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 0.9em;
+  min-width: 450px;
+  border-radius: 5px 5px 0px 0px;
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.table-content thead tr
+{
+  background-color: #009879;
+  color: #ffffff;
+  text-align: left;
+  font-weight: bold;
+}
+
+.table-content th,
+.table-content td
+{
+  padding: 5px 8px;
+}
+
+.table-content tbody tr
+{
+  border-bottom: 1px solid #dddddd;
+}
+
+.table-content tbody tr:nth-of-type(even)
+{
+  background-color: #d4d4d4
+}
+
+.table-content tbody tr:last-of-type
+{
+  border-bottom: 2px solid #009879;
+}
+
+
+
+
+
+
+

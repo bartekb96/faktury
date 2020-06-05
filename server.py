@@ -18,7 +18,7 @@ def main():
 
 @app.route('/upload-invoice', methods = ['GET', 'POST'])
 def getInvoice():
-    
+
     for filename in os.listdir(uploadDirectory):
         file_path = os.path.join(uploadDirectory, filename)
         try:
@@ -91,6 +91,8 @@ def getInvoice():
                     invoiceAmount = invoices[0].invoiceAmount
                 else:
                     invoiceAmount = "-"
+
+                positions = invoices[0].positionsList
                 # --------------------------------------------------------------------------------------------------
                 # --------------------------------------------------------------------------------------------------
                 # --------------------------------------------------------------------------------------------------
@@ -101,7 +103,7 @@ def getInvoice():
                                        sellerAddress=sellerAddress, sellerName=sellerName,
                                        buyerNip=buyerNip, buyerCity=buyerCity,
                                        buyerAddress=buyerAddress, buyerName=buyerName,
-                                       invoiceAmount=invoiceAmount)
+                                       invoiceAmount=invoiceAmount, positions=positions)
 
             #return redirect(request.url)
 
