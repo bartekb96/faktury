@@ -169,6 +169,10 @@ def getBuyerData(list, myPath):
                         if buyerNip is not None:
                             if buyerNip.group('NIP') is not None:
                                 nip = buyerNip.group('NIP')
+                            else:
+                                nip = "-"
+                        else:
+                            nip = "-"
 
                         for l in list:
                             if l.invoiceName == val[:-4]:
