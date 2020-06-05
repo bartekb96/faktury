@@ -116,8 +116,8 @@ def ocrToGetNumber():
             faktura.write(text)
             faktura.close()
 
-def getBuyerData(list):
-    myPath = path.getPath()
+def getBuyerData(list, myPath):
+    #myPath = path.getPath()
     buyerPattern = r'nabywca( \[\d*\])?:?\s*(?P<buyerName>[^\n]*)\s*(?P<buyerAddress>[^\n,]*)(\s*|\s?,\s?)(?P<buyerCity>\d{2}-\d{3}\s\w+ ?\w* ?\w*)\s*(NIP:?)?\s*((?P<buyerNip1>\d{10})|(?P<buyerNip2>\d{3}-\d{2}-\d{2}-\d{3})|(?P<buyerNip3>\d{3}-\d{3}-\d{2}-\d{2}))?'
     buyerNamePattern = r'nabywca( \[\d*\])?:?\s*(?P<name>[^\n]*)'
     buyerAddressPattern = r'nabywca( \[\d*\])?:?.*?((\n|,\x20|\x20)(?P<address>(os\.?\x20?|ul\.?\x20?|al\.?\x20?)?[a-ząćęłńóśźż]{2,}[a-ząćęłńóśźż\x20]+\d+\x20?/?m?\.?\x20?\d*[a-z]?))'  #global multiline isensitive sinngle line
@@ -187,8 +187,8 @@ def getBuyerData(list):
 
                     break
 
-def getInvoiceNumber(list):
-    myPath = path.getPath()
+def getInvoiceNumber(list, myPath):
+    #myPath = path.getPath()
     numberPattern = r".*((Faktura\s*VAT\s*numer)|(Faktura\s*VAT\s*nr)|(Faktura\s*VAT)|(Faktura\s*Numer)|(Faktura\s*nr)):?\s*(?P<invoiceNumber>\S*)"
 
     for val in os.listdir(myPath):
@@ -209,8 +209,8 @@ def getInvoiceNumber(list):
             except AttributeError as err:
                 print("nie udało się przypisać numeru faktury: {0}".format(err))
 
-def getSellerData(list):
-    myPath = path.getPath()
+def getSellerData(list, myPath):
+    #myPath = path.getPath()
     sellerPattern = r'sprzedawca:?\s*(?P<sellerName>[^\n]*)\s*(?P<sellerAddress>[^\n]*)\s*(?P<sellerCity>[^\n]*)\s*NIP:?\s*(?P<sellerNip>\d{10})'
     sellerNamePattern = r'sprzedawca( \[\d*\])?:?\s*(?P<name>[^\n,]*(\n|\.\x20|,\x20))'
     sellerAddressPattern = r'sprzedawca( \[\d*\])?:?.*?((\n|,\x20|\x20)(?P<address>(os\.?\x20?|ul\.?\x20?|al\.?\x20?)?[a-ząćęłńóśźż]{2,}[a-ząćęłńóśźż\x20]+\d+\x20?/?m?\.?\x20?\d*[a-z]?))'  #global multiline isensitive sinngle line
@@ -348,8 +348,8 @@ def getSellerSDataWhenNoHeader(directory, invoiceImage, invoiceList):
     except (AttributeError, UnboundLocalError) as err:
         print("nie udało się przypisać danych nabywcy faktury {0}, ERROR: {1}".format(invoiceImage, err))
 
-def getInvoiceAmount(list):
-    myPath = path.getPath()
+def getInvoiceAmount(list, myPath):
+    #myPath = path.getPath()
     amountPattern = r'(kwota\x20)?do\x20zapłaty:?[^\n,0-9]*(?P<amount>\d+,\d{2})(\x20(zł|PLN))?'
 
     for val in os.listdir(myPath):
@@ -381,8 +381,8 @@ def getInvoiceAmount(list):
 
             continue
 
-def getPositionsList(invoiceList):
-    myPath = path.getPath()
+def getPositionsList(invoiceList, myPath):
+    #myPath = path.getPath()
 
     for val in os.listdir(myPath):
         if val.endswith(".png") or val.endswith(".jpg"):
@@ -437,7 +437,6 @@ def getPositionsList(invoiceList):
                         l.positionsList = serviceList
             except TypeError as err:
                 print("nie udało się przypisać listy pozycji, dla faktury {0}, ERROR: {1}".format(val, err))
-
 
 def searchInBoxes(val, image, boxes, h, w):
 
@@ -560,7 +559,6 @@ def getDataFromTable(boxes, croppedImage, w, val):
         print("nie udało się odnaleźć pól tabeli pozycji, dla faktury {0}, ERROR: {1}".format(val, err))
 
     return positionList
-
 
 def dupa(path):
     #image = cv2.imread(path, 0)
