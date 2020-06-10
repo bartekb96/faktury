@@ -67,6 +67,19 @@
 	border-bottom-color: black;
 }
 
+#datas
+{
+	background-color: #95a6a1;
+	color: black;
+	text-align: left;
+	padding: 15px;
+	float: left;
+	min-height: 620px;
+	width: 1170px;
+	border-bottom-style: solid;
+	border-bottom-color: black;
+}
+
 .walidated table
 {
 	margin: 0 auto;
@@ -83,8 +96,21 @@
 	font-size: 12px;
 }
 
+#footer2
+{
+	background-color: #12c7a0;
+	color: white;
+	text-align: center;
+	padding: 5px;
+	min-height: 30px;
+	font-size: 12px;
+}
+
 .custom-button
 {
+	font-size: 12px;
+	font-weight: normal;
+	text-decoration: none;
 	padding: 10px;
 	color: white;
 	background-color: #009578;

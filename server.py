@@ -1,8 +1,10 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, session
 import os
 import path
 import shutil
 import validate
+import parse_invoice
+import json
 
 uploadDirectory = path.getUploadFiles()
 
@@ -10,6 +12,7 @@ app = Flask(__name__)
 app.config["IMAGE_UPLOADS"] = uploadDirectory
 UPLOADS = os.path.join("static", "uploads")
 app.config["UPLOAD_FOLDER"] = UPLOADS
+app.secret_key = "secreetkey123"
 
 
 @app.route("/")
@@ -40,7 +43,7 @@ def getInvoice():
                 #------------------------------------SETtING VALUES------------------------------------------------
                 #--------------------------------------------------------------------------------------------------
                 invoices = validate.validateInvoice(uploadDirectory)
-                print(invoices[0].invoiceNumber)
+                #print(invoices[0].invoiceNumber)
 
                 if invoices[0].invoiceNumber and invoices[0].invoiceNumber is not "":
                     invoiceNumber = invoices[0].invoiceNumber
@@ -97,6 +100,47 @@ def getInvoice():
                 # --------------------------------------------------------------------------------------------------
                 # --------------------------------------------------------------------------------------------------
 
+                positionNames = []
+                for p in positions:
+                    positionNames.append(p.positionName)
+
+                positionAmounts = []
+                for p in positions:
+                    positionAmounts.append(p.positionAmount)
+
+                invoiceDict = {
+                    "invoiceNumber": invoiceNumber,
+                    "sellerNip": sellerNip,
+                    "sellerCity": sellerCity,
+                    "sellerAddress": sellerAddress,
+                    "sellerName": sellerName,
+                    "buyerNip": buyerNip,
+                    "buyerCity": buyerCity,
+                    "buyerAddress": buyerAddress,
+                    "buyerName": buyerName,
+                    "invoiceAmount": invoiceAmount,
+                    "positionNames":  positionNames,
+                    "positionAmounts": positionAmounts,
+                }
+
+                session['invoiceAsDictionary'] = invoiceDict
+
+                #json_dump = json.dumps(invoiceObject)
+                #print(json_dump)
+
+                '''session['invoiceName'] = invoice.filename
+                session['invoiceNumber'] = invoiceNumber
+                session['sellerNip'] = sellerNip
+                session['sellerCity'] = sellerCity
+                session['sellerAddress'] = sellerAddress
+                session['sellerName'] = sellerName
+                session['buyerNip'] = buyerNip
+                session['buyerCity'] = buyerCity
+                session['buyerAddress'] = buyerAddress
+                session['buyerName'] = buyerName
+                session['invoiceAmount'] = invoiceAmount
+                session['positions'] = positions.__dict__'''
+
                 return render_template('index.html', invoiceName=invoice.filename,
                                        invoiceNumber=invoiceNumber, sellerNip=sellerNip,
                                        sellerCity=sellerCity,
@@ -108,6 +152,40 @@ def getInvoice():
             #return redirect(request.url)
 
     return render_template('index.html')
+
+@app.route('/correctData')
+def correctData():
+
+    invoiceAsDict = session['invoiceAsDictionary']
+    #print(invoiceAsDict)
+
+    invoiceNumber = invoiceAsDict['invoiceNumber']
+    sellerNip = invoiceAsDict['sellerNip']
+    sellerCity = invoiceAsDict['sellerCity']
+    sellerAddress = invoiceAsDict['sellerAddress']
+    sellerName = invoiceAsDict['sellerName']
+    buyerNip = invoiceAsDict['buyerNip']
+    buyerCity = invoiceAsDict['buyerCity']
+    buyerAddress = invoiceAsDict['buyerAddress']
+    buyerName = invoiceAsDict['buyerName']
+    invoiceAmount = invoiceAsDict['invoiceAmount']
+    positionNames = invoiceAsDict['positionNames']
+    positionAmounts = invoiceAsDict['positionAmounts']
+
+    positions = []
+    for p in range(len(positionNames)):
+        tmpPosition = parse_invoice.POSITION()
+        tmpPosition.positionName = positionNames[p]
+        tmpPosition.positionAmount = positionAmounts[p]
+        positions.append(tmpPosition)
+
+    return render_template('correct_data.html',
+                           invoiceNumber=invoiceNumber, sellerNip=sellerNip,
+                           sellerCity=sellerCity,
+                           sellerAddress=sellerAddress, sellerName=sellerName,
+                           buyerNip=buyerNip, buyerCity=buyerCity,
+                           buyerAddress=buyerAddress, buyerName=buyerName,
+                           invoiceAmount=invoiceAmount, positions=positions)
 
 if __name__ == "__main__":
     app.run(debug = True)

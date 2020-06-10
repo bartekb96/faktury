@@ -564,7 +564,7 @@ def getDataFromTable(boxes, croppedImage, w, val):
 
     return positionList
 
-def dupa(path):
+def test(path):
     #image = cv2.imread(path, 0)
     image = cv2.imread(path)
 
