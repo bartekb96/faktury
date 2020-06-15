@@ -17,101 +17,109 @@
 
 		<div id="datas">
 		
-			<table class="table-content" align="center">
-				<thead>
-					<tr>
-						<th>OPIS</th>
-						<th>ODCZYTANA WARTOŚĆ</th>
-						<th>POPRAWIONA WARTOŚĆ</th>
-					</tr>
-				</thead>
-				
-				<tbody>
-					<tr>
-						<td>Numer faktury</td>
-						<td>{{invoiceNumber}}</td>
-						<td><input type="text" class="corrected-data" value={{invoiceNumber}}></td>
-					</tr>
-					
-					<tr>
-						<td>NIP sprzedawcy</td>
-						<td>{{sellerNip}}</td>
-						<td><input type="text" class="corrected-data" value={{sellerNip}}></td>
-					</tr>
-					
-					<tr>
-						<td>Miasto sprzedawcy</td>
-						<td>{{sellerCity}}</td>
-						<td><input type="text" class="corrected-data" value={{sellerCity}}></td>
-					</tr>
-					
-					<tr>
-						<td>Adres sprzedawcy</td>
-						<td>{{sellerAddress}}</td>
-						<td><input type="text" class="corrected-data" value={{sellerAddress}}></td>
-					</tr>
-					
-					<tr>
-						<td>Nazwa sprzedawcy</td>
-						<td>{{sellerName}}</td>
-						<td><input type="text" class="corrected-data" value={{sellerName}}></td>
-					</tr>
-					
-					<tr>
-						<td>NIP nabywcy</td>
-						<td>{{buyerNip}}</td>
-						<td><input type="text" class="corrected-data" value={{buyerNip}}></td>
-					</tr>
-					
-					<tr>
-						<td>Miasto nabywcy</td>
-						<td>{{buyerCity}}</td>
-						<td><input type="text" class="corrected-data" value={{buyerCity}}></td>
-					</tr>
-					
-					<tr>
-						<td>Adres nabywcy</td>
-						<td>{{buyerAddress}}</td>
-						<td><input type="text" class="corrected-data" value={{buyerAddress}}></td>
-					</tr>
-					
-					<tr>
-						<td>Nazwa nabywcy</td>
-						<td>{{buyerName}}</td>
-						<td><input type="text" class="corrected-data" value={{buyerName}}></td>
-					</tr>
-					
-					<tr>
-						<td>Kwota całkowita</td>
-						<td>{{invoiceAmount}}</td>
-						<td><input type="text" class="corrected-data" value={{invoiceAmount}}></td>
-					</tr>
-				</tbody>
-			</table>
-					
-			<table class="table-content" align="center">
-				<thead>
-					<tr>
-						<th>ODCZYTANA NAZWA USŁUGI</th>
-						<th>POPRAWIONA NAZWA USŁUGI</th>
-						<th>ODCZYTANY KOSZT USŁUGI [PLN]</th>
-						<th>POPRAWIONY KOSZT USŁUGIi [PLN]</th>
-					</tr>
-				</thead>
-				
-				<tbody>
-				
-					{% for position in positions %}
+			<form action="/correct-invoice" method = "POST">
+			
+				<table class="table-content" align="center">
+					<thead>
 						<tr>
-							<td>{{ position.positionName }}</td>
-							<td><input type="text" class="corrected-data" value={{ position.positionName }}></td>
-							<td>{{ position.positionAmount }}</td>
-							<td><input type="text" class="corrected-data" value={{ position.positionAmount }}></td>
+							<th>OPIS</th>
+							<th>ODCZYTANA WARTOŚĆ</th>
+							<th>POPRAWIONA WARTOŚĆ</th>
 						</tr>
-					{% endfor %}
+					</thead>
 					
-				</tbody>	
-			</table>
+					<tbody>
+						<tr>
+							<td>Numer faktury</td>
+							<td>{{invoiceNumber}}</td>
+							<td><input type="text" class="corrected-data" value='{{invoiceNumber}}'></td>
+						</tr>
+						
+						<tr>
+							<td>NIP sprzedawcy</td>
+							<td>{{sellerNip}}</td>
+							<td><input type="text" class="corrected-data" value='{{sellerNip}}'></td>
+						</tr>
+						
+						<tr>
+							<td>Miasto sprzedawcy</td>
+							<td>{{sellerCity}}</td>
+							<td><input type="text" class="corrected-data" value='{{sellerCity}}'></td>
+						</tr>
+						
+						<tr>
+							<td>Adres sprzedawcy</td>
+							<td>{{sellerAddress}}</td>
+							<td><input type="text" class="corrected-data" value='{{sellerAddress}}'></td>
+						</tr>
+						
+						<tr>
+							<td>Nazwa sprzedawcy</td>
+							<td>{{sellerName}}</td>
+							<td><input type="text" class="corrected-data" value='{{sellerName}}'></td>
+						</tr>
+						
+						<tr>
+							<td>NIP nabywcy</td>
+							<td>{{buyerNip}}</td>
+							<td><input type="text" class="corrected-data" value='{{buyerNip}}'></td>
+						</tr>
+						
+						<tr>
+							<td>Miasto nabywcy</td>
+							<td>{{buyerCity}}</td>
+							<td><input type="text" class="corrected-data" value='{{buyerCity}}'></td>
+						</tr>
+						
+						<tr>
+							<td>Adres nabywcy</td>
+							<td>{{buyerAddress}}</td>
+							<td><input type="text" class="corrected-data" value='{{buyerAddress}}'></td>
+						</tr>
+						
+						<tr>
+							<td>Nazwa nabywcy</td>
+							<td>{{buyerName}}</td>
+							<td><input type="text" class="corrected-data" value='{{buyerName}}'></td>
+						</tr>
+						
+						<tr>
+							<td>Kwota całkowita</td>
+							<td>{{invoiceAmount}}</td>
+							<td><input type="text" class="corrected-data" value='{{invoiceAmount}}'></td>
+						</tr>
+					</tbody>
+				</table>
+						
+				<table class="table-content" align="center" id="positions-table">
+					<thead>
+						<tr>
+							<th>ODCZYTANA NAZWA USŁUGI</th>
+							<th>POPRAWIONA NAZWA USŁUGI</th>
+							<th>ODCZYTANY KOSZT USŁUGI [PLN]</th>
+							<th>POPRAWIONY KOSZT USŁUGIi [PLN]</th>
+						</tr>
+					</thead>
+					
+					<tbody>
+					
+						{% for position in positions %}
+							<tr>
+								<td>{{ position.positionName }}</td>
+								<td><input type="text" class="corrected-data" value='{{ position.positionName }}'></td>
+								<td>{{ position.positionAmount }}</td>
+								<td><input type="text" class="corrected-data" value='{{ position.positionAmount }}'></td>
+							</tr>
+						{% endfor %}
+						
+					</tbody>	
+				</table>
+				
+				<button type = "button" id = "accept-btn" class = "custom-button">ZATWIERDŹ FAKTURĘ</button>
+				<button type = "button" id = "add-row" class = "custom-button">DODAJ NOWĄ POZYCJĘ</button>
+				
+			</form>
+			
 		</div>
 		
 		<div id="footer2">
@@ -119,6 +127,24 @@
 		</div>
 		
     </div>
+	
+	
+	<script>
+		const table = document.getElementById("positions-table");
+		const addButton = document.getElementById("add-row");
+
+		addButton.addEventListener("click", function() {
+			var row = table.insertRow(-1);
+			var cell1 = row.insertCell(0);
+			var cell2 = row.insertCell(1);
+			var cell3 = row.insertCell(2);
+			var cell4 = row.insertCell(3);
+			cell1.innerHTML = "-";
+			cell2.innerHTML = "<input type='text' class='corrected-data'>"; 
+			cell3.innerHTML = "-"; 
+			cell4.innerHTML = "<input type='text' class='corrected-data'>"; 
+		});
+	</script>
 	
 	
 </body>
