@@ -17,108 +17,105 @@
 
 		<div id="datas">
 		
-			<form action="/correct-invoice" method = "POST">
-			
-				<table class="table-content" align="center">
-					<thead>
-						<tr>
-							<th>OPIS</th>
-							<th>ODCZYTANA WARTOŚĆ</th>
-							<th>POPRAWIONA WARTOŚĆ</th>
-						</tr>
-					</thead>
-					
-					<tbody>
-						<tr>
-							<td>Numer faktury</td>
-							<td>{{invoiceNumber}}</td>
-							<td><input type="text" class="corrected-data" value='{{invoiceNumber}}'></td>
-						</tr>
-						
-						<tr>
-							<td>NIP sprzedawcy</td>
-							<td>{{sellerNip}}</td>
-							<td><input type="text" class="corrected-data" value='{{sellerNip}}'></td>
-						</tr>
-						
-						<tr>
-							<td>Miasto sprzedawcy</td>
-							<td>{{sellerCity}}</td>
-							<td><input type="text" class="corrected-data" value='{{sellerCity}}'></td>
-						</tr>
-						
-						<tr>
-							<td>Adres sprzedawcy</td>
-							<td>{{sellerAddress}}</td>
-							<td><input type="text" class="corrected-data" value='{{sellerAddress}}'></td>
-						</tr>
-						
-						<tr>
-							<td>Nazwa sprzedawcy</td>
-							<td>{{sellerName}}</td>
-							<td><input type="text" class="corrected-data" value='{{sellerName}}'></td>
-						</tr>
-						
-						<tr>
-							<td>NIP nabywcy</td>
-							<td>{{buyerNip}}</td>
-							<td><input type="text" class="corrected-data" value='{{buyerNip}}'></td>
-						</tr>
-						
-						<tr>
-							<td>Miasto nabywcy</td>
-							<td>{{buyerCity}}</td>
-							<td><input type="text" class="corrected-data" value='{{buyerCity}}'></td>
-						</tr>
-						
-						<tr>
-							<td>Adres nabywcy</td>
-							<td>{{buyerAddress}}</td>
-							<td><input type="text" class="corrected-data" value='{{buyerAddress}}'></td>
-						</tr>
-						
-						<tr>
-							<td>Nazwa nabywcy</td>
-							<td>{{buyerName}}</td>
-							<td><input type="text" class="corrected-data" value='{{buyerName}}'></td>
-						</tr>
-						
-						<tr>
-							<td>Kwota całkowita</td>
-							<td>{{invoiceAmount}}</td>
-							<td><input type="text" class="corrected-data" value='{{invoiceAmount}}'></td>
-						</tr>
-					</tbody>
-				</table>
-						
-				<table class="table-content" align="center" id="positions-table">
-					<thead>
-						<tr>
-							<th>ODCZYTANA NAZWA USŁUGI</th>
-							<th>POPRAWIONA NAZWA USŁUGI</th>
-							<th>ODCZYTANY KOSZT USŁUGI [PLN]</th>
-							<th>POPRAWIONY KOSZT USŁUGIi [PLN]</th>
-						</tr>
-					</thead>
-					
-					<tbody>
-					
-						{% for position in positions %}
-							<tr>
-								<td>{{ position.positionName }}</td>
-								<td><input type="text" class="corrected-data" value='{{ position.positionName }}'></td>
-								<td>{{ position.positionAmount }}</td>
-								<td><input type="text" class="corrected-data" value='{{ position.positionAmount }}'></td>
-							</tr>
-						{% endfor %}
-						
-					</tbody>	
-				</table>
+			<table class="table-content" align="center">
+				<thead>
+					<tr>
+						<th>OPIS</th>
+						<th>ODCZYTANA WARTOŚĆ</th>
+						<th>POPRAWIONA WARTOŚĆ</th>
+					</tr>
+				</thead>
 				
-				<button type = "button" id = "accept-btn" class = "custom-button">ZATWIERDŹ FAKTURĘ</button>
-				<button type = "button" id = "add-row" class = "custom-button">DODAJ NOWĄ POZYCJĘ</button>
+				<tbody>
+					<tr>
+						<td>Numer faktury</td>
+						<td>{{invoiceNumber}}</td>
+						<td><input type="text" class="corrected-data" value='{{invoiceNumber}}' name="invoiceNumber"></td>
+					</tr>
+					
+					<tr>
+						<td>NIP sprzedawcy</td>
+						<td>{{sellerNip}}</td>
+						<td><input type="text" class="corrected-data" value='{{sellerNip}}' name="sellerNip"></td>
+					</tr>
+					
+					<tr>
+						<td>Miasto sprzedawcy</td>
+						<td>{{sellerCity}}</td>
+						<td><input type="text" class="corrected-data" value='{{sellerCity}}' name="sellerCity"></td>
+					</tr>
+					
+					<tr>
+						<td>Adres sprzedawcy</td>
+						<td>{{sellerAddress}}</td>
+						<td><input type="text" class="corrected-data" value='{{sellerAddress}}' name="sellerAddress"></td>
+					</tr>
+					
+					<tr>
+						<td>Nazwa sprzedawcy</td>
+						<td>{{sellerName}}</td>
+						<td><input type="text" class="corrected-data" value='{{sellerName}}' name="sellerName"></td>
+					</tr>
+					
+					<tr>
+						<td>NIP nabywcy</td>
+						<td>{{buyerNip}}</td>
+						<td><input type="text" class="corrected-data" value='{{buyerNip}}' name="buyerNip"></td>
+					</tr>
+					
+					<tr>
+						<td>Miasto nabywcy</td>
+						<td>{{buyerCity}}</td>
+						<td><input type="text" class="corrected-data" value='{{buyerCity}}' namwe="buyerCity"></td>
+					</tr>
+					
+					<tr>
+						<td>Adres nabywcy</td>
+						<td>{{buyerAddress}}</td>
+						<td><input type="text" class="corrected-data" value='{{buyerAddress}}' name="buyerAddress"></td>
+					</tr>
+					
+					<tr>
+						<td>Nazwa nabywcy</td>
+						<td>{{buyerName}}</td>
+						<td><input type="text" class="corrected-data" value='{{buyerName}}' name="buyerName"></td>
+					</tr>
+					
+					<tr>
+						<td>Kwota całkowita</td>
+						<td>{{invoiceAmount}}</td>
+						<td><input type="text" class="corrected-data" value='{{invoiceAmount}}' name="invoiceAmount"></td>
+					</tr>
+				</tbody>
+			</table>
+					
+					
+			<table class="table-content" align="center" id="positions-table">
+				<thead>
+					<tr>
+						<th>ODCZYTANA NAZWA USŁUGI</th>
+						<th>POPRAWIONA NAZWA USŁUGI</th>
+						<th>ODCZYTANY KOSZT USŁUGI [PLN]</th>
+						<th>POPRAWIONY KOSZT USŁUGIi [PLN]</th>
+					</tr>
+				</thead>
 				
-			</form>
+				<tbody>
+				
+					{% for position in positions %}
+						<tr>
+							<td>{{ position.positionName }}</td>
+							<td><input type="text" class="corrected-data" value='{{ position.positionName }}' name="positionName{{ loop.index }}"></td>
+							<td>{{ position.positionAmount }}</td>
+							<td><input type="text" class="corrected-data" value='{{ position.positionAmount }}' name="positionAmount{{ loop.index }}"></td>
+						</tr>
+					{% endfor %}
+					
+				</tbody>	
+			</table>
+				
+			<button id = "accept-btn" class = "custom-button" onclick="submit_changes();">ZATWIERDŹ FAKTURĘ</button>
+			<button type = "button" id = "add-row" class = "custom-button">DODAJ NOWĄ POZYCJĘ</button>
 			
 		</div>
 		
@@ -144,6 +141,37 @@
 			cell3.innerHTML = "-"; 
 			cell4.innerHTML = "<input type='text' class='corrected-data'>"; 
 		});
+		
+		function submit_changes() {
+		
+			var totalRowCount = 0;
+			var rowCount = 0;
+			var rows = table.getElementsByTagName("tr")
+			
+			for (var i = 0; i < rows.length; i++) {
+				totalRowCount++;
+				if (rows[i].getElementsByTagName("td").length > 0) {
+					rowCount++;
+				}
+			}
+			
+			var data = {
+				rows: rowCount
+			};
+		
+			fetch('/correctInvoice', {
+				method: 'POST',
+				body: JSON.stringify(data)
+			})
+			.then(function(text) {
+				console.log("POST response: " + text);
+			})
+			.catch(function(error) {
+				console.log("Fetch error: " + error);
+			});
+
+		}
+		
 	</script>
 	
 	

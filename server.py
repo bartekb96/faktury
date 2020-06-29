@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, jsonify, make_response
 import os
 import path
 import shutil
@@ -157,7 +157,7 @@ def getInvoice():
 def correctData():
 
     invoiceAsDict = session['invoiceAsDictionary']
-    #print(invoiceAsDict)
+    #print(invoiceAsDict)S
 
     invoiceNumber = invoiceAsDict['invoiceNumber']
     sellerNip = invoiceAsDict['sellerNip']
@@ -186,6 +186,16 @@ def correctData():
                            buyerNip=buyerNip, buyerCity=buyerCity,
                            buyerAddress=buyerAddress, buyerName=buyerName,
                            invoiceAmount=invoiceAmount, positions=positions)
+
+@app.route('/correctInvoice', methods = ['GET', 'POST'])
+def correctInvoice():
+    if request.method == 'POST':
+        print('Incoming..')
+        data = request.get_json(force = True)
+        print(data)  # parse as JSON
+        #res = make_response(data, 200)
+        #res = make_response(jsonify(data), 200)
+        return jsonify({"rows": "rows"})
 
 if __name__ == "__main__":
     app.run(debug = True)
