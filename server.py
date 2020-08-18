@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, jsonify, make_response
+from flask import Flask, render_template, request, redirect, session, jsonify, make_response, render_template_string
 import os
 import path
 import shutil
@@ -18,6 +18,7 @@ app.secret_key = "secreetkey123"
 @app.route("/")
 def main():
     return render_template('index.html')
+    #return jsonify({"rows": "rows"})
 
 @app.route('/upload-invoice', methods = ['GET', 'POST'])
 def getInvoice():
@@ -187,15 +188,28 @@ def correctData():
                            buyerAddress=buyerAddress, buyerName=buyerName,
                            invoiceAmount=invoiceAmount, positions=positions)
 
+#@app.route('/correctInvoice/<final_data>')
+#def correctInvoice(final_data):
 @app.route('/correctInvoice', methods = ['GET', 'POST'])
 def correctInvoice():
+    '''print(final_data)
+    print(type(final_data))
+    return render_template('final_data.html', final_data=3)'''
+
     if request.method == 'POST':
-        print('Incoming..')
         data = request.get_json(force = True)
-        print(data)  # parse as JSON
-        #res = make_response(data, 200)
-        #res = make_response(jsonify(data), 200)
-        return jsonify({"rows": "rows"})
+        session['final_data'] = data
+        #print(data)
+        res = make_response(jsonify(data), 200)
+        return res
+
+@app.route('/presentData')
+def presentData():
+    final_data = session['final_data']
+    print(type(final_data))
+    print(final_data)
+    return render_template('final_data.html', final_data=final_data)
+
 
 if __name__ == "__main__":
     app.run(debug = True)
