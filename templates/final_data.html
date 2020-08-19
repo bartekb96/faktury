@@ -1,1 +1,16 @@
-{{final_data}}
+POPRAWIONE DANE: <br>
+
+<table>
+	<tbody>
+	{% for data in corrected_data['data'] %}
+		{% for key, value in data.items() %}
+			<tr>
+				<td>{{ key }}</td>
+				<td>{{ value }}</td>
+			</tr>
+		{% endfor %}
+	{% endfor %}
+	</tbody>
+</table>
+
+<br>

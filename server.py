@@ -192,10 +192,6 @@ def correctData():
 #def correctInvoice(final_data):
 @app.route('/correctInvoice', methods = ['GET', 'POST'])
 def correctInvoice():
-    '''print(final_data)
-    print(type(final_data))
-    return render_template('final_data.html', final_data=3)'''
-
     if request.method == 'POST':
         data = request.get_json(force = True)
         session['final_data'] = data
@@ -205,10 +201,8 @@ def correctInvoice():
 
 @app.route('/presentData')
 def presentData():
-    final_data = session['final_data']
-    print(type(final_data))
-    print(final_data)
-    return render_template('final_data.html', final_data=final_data)
+    final_data = session['final_data']  # final_data is type of dict
+    return render_template('final_data.html', corrected_data=final_data)
 
 
 if __name__ == "__main__":
